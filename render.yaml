@@ -18,7 +18,7 @@ services:
     dockerContext: .
     plan: free
     healthCheckPath: /health
-    dockerCommand: sh -c "python scripts/demo_bootstrap.py && uvicorn app.api.main:app --host 0.0.0.0 --port $PORT"
+    dockerCommand: sh scripts/render_start_api.sh
     envVars:
       - key: DATABASE_URL
         fromDatabase:
@@ -33,7 +33,7 @@ services:
     dockerfilePath: ./Dockerfile
     dockerContext: .
     plan: free
-    dockerCommand: streamlit run dashboard/Home.py --server.address 0.0.0.0 --server.port $PORT --server.headless true
+    dockerCommand: sh scripts/render_start_dashboard.sh
     envVars:
       - key: DATABASE_URL
         fromDatabase:

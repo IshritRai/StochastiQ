@@ -15,8 +15,10 @@ from app.data import models as m
 from app.data.db import session_scope
 from app.engine.contracts import attribute, run_org
 from dashboard.format_utils import format_inr
+from dashboard.theme import CATEGORICAL, INK_SECONDARY, apply_layout, inject_page_css
 
-st.set_page_config(page_title="Executive | StochastiQ", layout="wide")
+st.set_page_config(page_title="Executive | StochastiQ", layout="wide", page_icon="\U0001f6e1️")
+st.markdown(inject_page_css(), unsafe_allow_html=True)
 st.title("Executive Risk View")
 
 
@@ -65,13 +67,19 @@ st.caption(
 st.subheader("Loss Exceedance Curve")
 lec_df = pd.DataFrame(org.summary.lec_points, columns=["loss", "exceedance_probability"])
 fig = go.Figure()
-fig.add_trace(go.Scatter(x=lec_df["loss"], y=lec_df["exceedance_probability"], mode="lines"))
-fig.update_layout(
-    xaxis_title="Annual loss (INR)",
-    yaxis_title="P(loss exceeds X)",
-    height=350,
-    margin={"l": 10, "r": 10, "t": 10, "b": 10},
+fig.add_trace(
+    go.Scatter(
+        x=lec_df["loss"],
+        y=lec_df["exceedance_probability"],
+        mode="lines",
+        line={"color": CATEGORICAL["blue"], "width": 2},
+        fill="tozeroy",
+        fillcolor="rgba(42, 120, 214, 0.08)",
+        hovertemplate="Loss exceeds %{x:,.0f}<br>P = %{y:.2%}<extra></extra>",
+    )
 )
+fig.update_layout(xaxis_title="Annual loss (INR)", yaxis_title="P(loss exceeds X)")
+apply_layout(fig, height=350)
 st.plotly_chart(fig, width="stretch")
 
 st.subheader("Top 5 Scenarios by EAL")
@@ -81,18 +89,50 @@ with session_scope() as _session:
         scenario = _session.get(m.ThreatScenario, sid)
         scenario_names[sid] = scenario.name if scenario else sid
 
-scenario_table = pd.DataFrame(
-    [
-        {
-            "Scenario": scenario_names[sid],
-            "EAL": result.summary.eal,
-            "EAL (formatted)": format_inr(result.summary.eal),
-            "VaR95 (formatted)": format_inr(result.summary.var95),
-        }
-        for sid, result in org.scenario_results.items()
-    ]
-).sort_values("EAL", ascending=False).head(5)
-st.dataframe(scenario_table[["Scenario", "EAL (formatted)", "VaR95 (formatted)"]], hide_index=True, width="stretch")
+scenario_table = (
+    pd.DataFrame(
+        [
+            {
+                "Scenario": scenario_names[sid],
+                "EAL": result.summary.eal,
+                "EAL (formatted)": format_inr(result.summary.eal),
+                "VaR95 (formatted)": format_inr(result.summary.var95),
+            }
+            for sid, result in org.scenario_results.items()
+        ]
+    )
+    .sort_values("EAL", ascending=False)
+    .head(5)
+)
+
+bar_col, table_col = st.columns([3, 2])
+with bar_col:
+    bar_fig = go.Figure(
+        go.Bar(
+            x=scenario_table["EAL"],
+            y=scenario_table["Scenario"],
+            orientation="h",
+            marker_color=CATEGORICAL["blue"],
+            text=scenario_table["EAL (formatted)"],
+            textposition="outside",
+            cliponaxis=False,
+            textfont={"color": INK_SECONDARY},
+            hovertemplate="%{y}<br>EAL: %{text}<extra></extra>",
+        )
+    )
+    bar_fig.update_layout(
+        xaxis_title="EAL (INR)",
+        yaxis={"autorange": "reversed"},
+        xaxis_range=[0, scenario_table["EAL"].max() * 1.25],
+    )
+    apply_layout(bar_fig, height=260)
+    st.plotly_chart(bar_fig, width="stretch")
+with table_col:
+    st.dataframe(
+        scenario_table[["Scenario", "EAL (formatted)", "VaR95 (formatted)"]],
+        hide_index=True,
+        width="stretch",
+    )
 
 st.subheader("Top Risk Contributors (assets)")
 if attribution_rows:
@@ -105,7 +145,24 @@ if attribution_rows:
         .head(10)
     )
     contrib_df["EAL share (formatted)"] = contrib_df["eal_share"].apply(format_inr)
-    st.dataframe(contrib_df[["Asset", "EAL share (formatted)"]], hide_index=True, width="stretch")
+
+    bar_col2, table_col2 = st.columns([3, 2])
+    with bar_col2:
+        contrib_sorted = contrib_df.sort_values("eal_share", ascending=True)
+        contrib_fig = go.Figure(
+            go.Bar(
+                x=contrib_sorted["eal_share"],
+                y=contrib_sorted["Asset"],
+                orientation="h",
+                marker_color=CATEGORICAL["blue"],
+                hovertemplate="%{y}<br>EAL share: %{x:,.0f}<extra></extra>",
+            )
+        )
+        contrib_fig.update_layout(xaxis_title="EAL share (INR)")
+        apply_layout(contrib_fig, height=280)
+        st.plotly_chart(contrib_fig, width="stretch")
+    with table_col2:
+        st.dataframe(contrib_df[["Asset", "EAL share (formatted)"]], hide_index=True, width="stretch")
 else:
     st.info("No attribution rows yet.")
 

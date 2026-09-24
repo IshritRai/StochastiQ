@@ -16,8 +16,10 @@ from app.data import models as m
 from app.data.db import session_scope
 from app.optimize.optimizer import GORDON_LOEB_FRACTION, budget_sweep, evaluate_options, optimize
 from dashboard.format_utils import format_inr
+from dashboard.theme import CATEGORICAL, STATUS, apply_layout, inject_page_css
 
-st.set_page_config(page_title="Investment | StochastiQ", layout="wide")
+st.set_page_config(page_title="Investment | StochastiQ", layout="wide", page_icon="\U0001f6e1️")
+st.markdown(inject_page_css(), unsafe_allow_html=True)
 st.title("Investment Optimization")
 
 with session_scope() as session:
@@ -43,18 +45,24 @@ st.caption(
     "Each row uses the SAME random draws as the baseline (apply_controls' common "
     "random numbers), so a zero-effect option always shows delta-EAL = 0 exactly."
 )
+def _rosi_badge(rosi: float) -> str:
+    color = STATUS["met"] if rosi >= 0 else STATUS["gap"]
+    icon = "✓" if rosi >= 0 else "✕"
+    return f'<span class="status-badge" style="background-color:{color};color:#ffffff;">{icon} {rosi:.0%}</span>'
+
+
 eval_df = pd.DataFrame(
     [
         {
             "Control": ev.control_name,
             "Annualized cost": format_inr(ev.annual_cost),
             "Standalone ΔEAL": format_inr(ev.standalone_delta_eal),
-            "ROSI": f"{ev.rosi:.0%}",
+            "ROSI": _rosi_badge(ev.rosi),
         }
         for ev in sorted(evaluations, key=lambda e: -e.standalone_delta_eal)
     ]
 )
-st.dataframe(eval_df, hide_index=True, width="stretch")
+st.markdown(eval_df.to_html(escape=False, index=False), unsafe_allow_html=True)
 
 st.subheader("Choose a set under a budget")
 max_cost = sum(ev.annual_cost for ev in evaluations) or 1.0
@@ -109,11 +117,18 @@ def _cached_budget_sweep(seed: int, n_iter: int):
 curve = _cached_budget_sweep(seed, n_iter)
 curve_df = pd.DataFrame(curve, columns=["budget", "delta_eal"])
 fig = go.Figure()
-fig.add_trace(go.Scatter(x=curve_df["budget"], y=curve_df["delta_eal"], mode="lines+markers"))
-fig.update_layout(
-    xaxis_title="Annual budget (INR)",
-    yaxis_title="Best achievable ΔEAL (INR)",
-    height=350,
-    margin={"l": 10, "r": 10, "t": 10, "b": 10},
+fig.add_trace(
+    go.Scatter(
+        x=curve_df["budget"],
+        y=curve_df["delta_eal"],
+        mode="lines+markers",
+        line={"color": CATEGORICAL["blue"], "width": 2},
+        marker={"size": 8, "color": CATEGORICAL["blue"]},
+        fill="tozeroy",
+        fillcolor="rgba(42, 120, 214, 0.08)",
+        hovertemplate="Budget: %{x:,.0f}<br>ΔEAL: %{y:,.0f}<extra></extra>",
+    )
 )
+fig.update_layout(xaxis_title="Annual budget (INR)", yaxis_title="Best achievable ΔEAL (INR)")
+apply_layout(fig, height=350)
 st.plotly_chart(fig, width="stretch")

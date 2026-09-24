@@ -1,0 +1,11 @@
+# Global theme, built from the validated reference palette in
+# dashboard/theme.py (Claude's dataviz skill). Keep these two files in sync
+# if the palette ever changes.
+
+[theme]
+base = "light"
+primaryColor = "#2a78d6"
+backgroundColor = "#f9f9f7"
+secondaryBackgroundColor = "#fcfcfb"
+textColor = "#0b0b0b"
+font = "sans serif"

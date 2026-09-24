@@ -14,8 +14,10 @@ from app.data import models as m
 from app.data.db import session_scope
 from app.engine.contracts import apply_controls, run_scenario
 from dashboard.format_utils import format_inr
+from dashboard.theme import inject_page_css
 
-st.set_page_config(page_title="What-if | StochastiQ", layout="wide")
+st.set_page_config(page_title="What-if | StochastiQ", layout="wide", page_icon="\U0001f6e1️")
+st.markdown(inject_page_css(), unsafe_allow_html=True)
 st.title("What-if: Control Scenario Simulation")
 
 with session_scope() as session:

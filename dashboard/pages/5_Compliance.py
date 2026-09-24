@@ -5,13 +5,16 @@ CSF 2.0 heatmap by Function, computed from finding/control-coverage status
 from __future__ import annotations
 
 import pandas as pd
+import plotly.graph_objects as go
 import streamlit as st
 
 from app.compliance.status import compliance_status
 from app.data import models as m
 from app.data.db import session_scope
+from dashboard.theme import STATUS, apply_layout, inject_page_css, status_badge_html
 
-st.set_page_config(page_title="Compliance | StochastiQ", layout="wide")
+st.set_page_config(page_title="Compliance | StochastiQ", layout="wide", page_icon="\U0001f6e1️")
+st.markdown(inject_page_css(), unsafe_allow_html=True)
 st.title("Compliance and Framework Mapping")
 
 with session_scope() as session:
@@ -39,25 +42,53 @@ if not rows:
 df = pd.DataFrame(rows)
 df["function"] = df["control_id"].str.split(".").str[0]
 
-status_order = {"gap": 0, "partial": 1, "met": 2, "unknown": 3}
-df["status_rank"] = df["status"].map(status_order)
-
-st.subheader("Status by Subcategory")
-color_map = {"gap": "🔴", "partial": "🟡", "met": "🟢", "unknown": "⚪"}
-df["status_display"] = df["status"].map(lambda s: f"{color_map.get(s, '')} {s}")
-st.dataframe(
-    df[["control_id", "short_title", "function", "status_display"]].sort_values(
-        ["function", "control_id"]
-    ),
-    hide_index=True,
-    width="stretch",
-)
+_STATUS_ORDER = ["gap", "partial", "met", "unknown"]
+status_rank = {s: i for i, s in enumerate(_STATUS_ORDER)}
+df["status_rank"] = df["status"].map(status_rank)
 
 st.subheader("Heatmap by Function")
-heatmap = (
-    df.groupby(["function", "status"]).size().unstack(fill_value=0).reindex(columns=["gap", "partial", "met", "unknown"], fill_value=0)
+st.caption(
+    "Status colors are reserved and never reused for anything else on this page "
+    "(critical = gap, warning = partial, good = met, muted = unknown)."
 )
-st.dataframe(heatmap, width="stretch")
+heatmap = (
+    df.groupby(["function", "status"])
+    .size()
+    .unstack(fill_value=0)
+    .reindex(columns=_STATUS_ORDER, fill_value=0)
+)
+heat_fig = go.Figure()
+for status in _STATUS_ORDER:
+    heat_fig.add_trace(
+        go.Bar(
+            name=status,
+            y=heatmap.index,
+            x=heatmap[status],
+            orientation="h",
+            marker_color=STATUS[status],
+            hovertemplate=f"%{{y}} · {status}: %{{x}}<extra></extra>",
+        )
+    )
+heat_fig.update_layout(barmode="stack", xaxis_title="Subcategories", yaxis={"autorange": "reversed"})
+apply_layout(heat_fig, height=280, show_legend=True)
+st.plotly_chart(heat_fig, width="stretch")
+
+st.subheader("Status by Subcategory")
+df["status_badge"] = df["status"].apply(status_badge_html)
+display_df = df[["control_id", "short_title", "function", "status_badge"]].sort_values(
+    ["function", "control_id"]
+)
+st.markdown(
+    display_df.rename(
+        columns={
+            "control_id": "Control ID",
+            "short_title": "Short title",
+            "function": "Function",
+            "status_badge": "Status",
+        }
+    ).to_html(escape=False, index=False),
+    unsafe_allow_html=True,
+)
 
 st.subheader("Findings and their framework references")
 with session_scope() as session:

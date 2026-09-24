@@ -12,8 +12,10 @@ import streamlit as st
 from app.data import models as m
 from app.data.db import session_scope
 from app.optimize.recommendations import top_finding_recommendations
+from dashboard.theme import STATUS, inject_page_css
 
-st.set_page_config(page_title="Technical | StochastiQ", layout="wide")
+st.set_page_config(page_title="Technical | StochastiQ", layout="wide", page_icon="\U0001f6e1️")
+st.markdown(inject_page_css(), unsafe_allow_html=True)
 st.title("Technical View")
 
 with session_scope() as session:
@@ -79,16 +81,20 @@ st.caption(
 )
 recommendations = top_finding_recommendations(limit=10)
 if recommendations:
-    st.dataframe(
+    rec_df = pd.DataFrame(
         [
             {
-                "Recommendation": r.recommendation_text,
+                "Recommendation": (
+                    r.recommendation_text.replace(
+                        "(CISA KEV)",
+                        f'<span class="status-badge" style="background-color:{STATUS["gap"]};color:#fff;">KEV</span>',
+                    )
+                ),
                 "Risk score": round(r.risk_score, 2),
             }
             for r in recommendations
-        ],
-        hide_index=True,
-        width="stretch",
+        ]
     )
+    st.markdown(rec_df.to_html(escape=False, index=False), unsafe_allow_html=True)
 else:
     st.info("No open findings to recommend against.")

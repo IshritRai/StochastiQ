@@ -12,8 +12,10 @@ import streamlit as st
 from app.data import models as m
 from app.data.db import session_scope
 from app.nlq.router import answer
+from dashboard.theme import inject_page_css
 
-st.set_page_config(page_title="StochastiQ", layout="wide")
+st.set_page_config(page_title="StochastiQ", layout="wide", page_icon="\U0001f6e1️")
+st.markdown(inject_page_css(), unsafe_allow_html=True)
 
 st.title("StochastiQ")
 st.caption(

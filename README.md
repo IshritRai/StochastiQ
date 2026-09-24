@@ -51,11 +51,19 @@ optimizer (ROSI, knapsack, joint re-simulation), KEV-first remediation
 recommendations, and a 9-intent natural-language query router.
 `make seed && make fetch-vuln-intel && make test` passes end to end.
 
+Task 14 is also done: CVE List V5 + Vulnrichment (CISA-ADP) CVSS-score
+precedence (CNA → ADP → NVD → default, `make enrich-vuln-intel` — live
+data), logged per-`Vulnerability.score_source`, plus OSV.dev package-version
+matching with a `match_confidence` on `AssetSoftware` (honestly 0 for the
+synthetic inventory's placeholder software, since it carries no real
+versions to match against).
+
 Still open: Task 16's Gemini tool-calling upgrade to the NL layer needs a
 `GEMINI_API_KEY` in the environment (not yet set here — the current NL
-router works without it, since it's a keyword router, not an LLM); the L2
-sweep (Tasks 14–18: telemetry-driven exposure, RBI/SEBI catalogues,
-incident clocks) and demo hardening (Task 21) are next.
+router works without it, since it's a keyword router, not an LLM); the rest
+of the L2 sweep (Tasks 15, 17, 18: telemetry-driven exposure, RBI/SEBI
+catalogues, incident clocks, compliance ₹ link) and demo hardening
+(Task 21) are next.
 
 See `PLAN.md` for the full task-by-task order, the cut line, and the
 proposed assumption values (multiplier bounds, tail cap, control efficacy

@@ -27,22 +27,25 @@ def test_catalogue_import_creates_frameworks_and_obligations(engine_db):
     assert "SEBI Cybersecurity and Cyber Resilience Framework (CSCRF)" in frameworks
 
     # FrameworkControl rows: RBI's paragraphs were confirmed against the
-    # primary RBI/DoS/2026-27/461 PDF (read in full in this session) and two
-    # of SEBI's against its primary CSCRF circular; the remaining
-    # SEBI_CONTROLS rows are still secondary-sourced and stay unverified
-    # (see rbi_sebi_data.py's module docstring).
+    # primary RBI/DoS/2026-27/461 PDF (read in full in this session), and
+    # SEBI's against its primary CSCRF circular plus its own CSCRF FAQ PDF
+    # (Annexure-O forensic-report requirement, Q76). Only SEBI-CSCRF-VAPT
+    # remains unverified: the FAQ's "3 months" VAPT-closure figure is for a
+    # different (periodic cyber-audit) VAPT cycle, not confirmed as this
+    # same incident-response item (see rbi_sebi_data.py's module docstring).
     controls = {c.control_id: c for c in session.query(m.FrameworkControl).all()}
     assert controls
-    unverified_controls = {"SEBI-CSCRF-ANNEX-O", "SEBI-CSCRF-VAPT"}
+    unverified_controls = {"SEBI-CSCRF-VAPT"}
     for control_id, control in controls.items():
         expected = control_id not in unverified_controls
         assert control.verified is expected, control_id
 
-    # ReportingObligation rows are a mix: the SEBI CSCRF timelines, RBI's
-    # DAKSH paragraph, and the standing CERT-In direction were all confirmed
-    # against primary sources; only the DPDP breach clock remains unverified.
+    # ReportingObligation rows: the SEBI CSCRF timelines, RBI's DAKSH
+    # paragraph, the standing CERT-In direction, and now DPDP's 72-hour
+    # clock (confirmed against the actual Gazette text, G.S.R. 846(E)) are
+    # all verified against primary sources.
     obligations = {o.regime: o for o in session.query(m.ReportingObligation).all()}
-    unverified_regimes = {"dpdp_breach"}
+    unverified_regimes: set[str] = set()
     for regime, obligation in obligations.items():
         expected = regime not in unverified_regimes
         assert obligation.verified is expected, regime

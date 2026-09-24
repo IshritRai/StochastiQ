@@ -35,12 +35,30 @@ a follow-up primary-source pass on 2026-09-24:
 - CERT-In's 6-hour requirement (cert_in row) is a standing 2022 direction
   under IT Act s.70B(6), independently well-established and kept
   `verified=True`.
-- DPDP's 72-hour breach-notification clock and SEBI_CONTROLS (still
-  secondary-sourced paragraph/standard IDs) remain `verified=False`.
-
-Before a real demo: fetch the DPDP Rules' own text to verify the 72-hour
-clock, and the SEBI FIRE-format circular's full text if any SEBI_CONTROLS
-row needs promoting.
+- DPDP: the actual Gazette notification (G.S.R. 846(E), Digital Personal
+  Data Protection Rules, 2025, dated 13 Nov 2025, signed by Ajit Kumar,
+  Jt. Secy.) was fetched in full (mirrored at dpdpa.com, since the
+  original egazette.gov.in copy is not directly fetchable). Rule 7(2)(b)
+  states verbatim: report to the Board "within seventy-two hours of
+  becoming aware of the breach, or within such longer period as the
+  Board may allow." Rule 1(4) puts Rule 7 (it falls in "rules 3, 5 to 16")
+  into force eighteen months after publication -- i.e. 13 May 2027,
+  confirming the commencement date already used here. `dpdp_breach` is
+  now `verified=True`.
+- SEBI-CSCRF-ANNEX-O (forensic audit report) was confirmed from SEBI's own
+  primary FAQ PDF on CSCRF (sebi.gov.in/sebi_data/faqfiles/jun-2025/
+  1749647139924.pdf, dated June 11, 2025), Q76: forensic audit/investigation
+  report is mandatory for High/Critical incidents, and conditional
+  (RCA-inconclusive or SEBI/HPSC-CS-directed) for Low/Medium. Now
+  `verified=True`.
+- SEBI-CSCRF-VAPT remains `verified=False`: the same primary FAQ (Q15, Q17)
+  confirms a "three (3) months" VAPT-finding-closure timeline, but that is
+  the periodic cyber-audit VAPT closure timeline (CSCRF section 4.3), not
+  confirmed as the same thing as the incident-response "VAPT and closure
+  report" this row describes (secondary-sourced from veritect.ai as a
+  distinct 45-day track under Annexure-O). Conflating the two would be a
+  guess, not a verification, so this row stays unverified pending a read
+  of Annexure-O's actual VAPT-closure clause.
 """
 
 from __future__ import annotations
@@ -113,15 +131,18 @@ SEBI_CONTROLS: list[tuple[str, str, str, bool]] = [
     ),
     (
         "SEBI-CSCRF-ANNEX-O",
-        "Forensic audit report per Annexure-O clause 3.4",
-        "https://www.cybernx.com/incident-response-under-sebi-cscrf-a-practical-guide-for-regulated-entities/",
-        False,
+        "Forensic audit report mandatory for High/Critical incidents, conditional for Low/Medium (Annexure-O)",
+        "https://www.sebi.gov.in/sebi_data/faqfiles/jun-2025/1749647139924.pdf",
+        True,  # SEBI's own CSCRF FAQ (June 11, 2025), Q76, confirmed verbatim
     ),
     (
         "SEBI-CSCRF-VAPT",
         "Incident-related VAPT and closure report",
         "https://veritect.ai/digital-data-ai-law/sebi-cscrf-compliance-playbook",
-        False,
+        False,  # secondary source's "45-day track" not confirmed; SEBI's own
+        # FAQ (Q15, Q17) confirms a "3 months" VAPT-closure timeline, but for
+        # the periodic cyber-audit VAPT cycle, not verified as this same
+        # incident-response item -- stays unverified rather than conflating.
     ),
 ]
 
@@ -225,8 +246,13 @@ REPORTING_OBLIGATIONS: list[tuple[str, float, str, str, list[str], dt.datetime |
         "Data Protection Board of India",
         "awareness",
         ["data_fiduciary"],
-        dt.datetime(2027, 5, 13, tzinfo=dt.UTC),  # DPDP Rules commencement date
-        "https://www.dpdpa.com/blogs/DPDPA_Implementation_Timeline.html",
-        False,  # secondary-sourced; DPDP Rules text itself not fetched in this pass
+        dt.datetime(2027, 5, 13, tzinfo=dt.UTC),  # Rule 1(4): Rule 7 (breach
+        # intimation, within "rules 3, 5 to 16") commences 18 months after
+        # the Rules' 13 Nov 2025 Gazette publication -- confirmed from the
+        # primary Gazette text itself, not just secondary commentary.
+        "https://www.dpdpa.com/DPDP_Rules_2025_English_only.pdf",  # G.S.R.
+        # 846(E), 13 Nov 2025; Rule 7(2)(b): report to the Board "within
+        # seventy-two hours of becoming aware of the breach"
+        True,  # confirmed verbatim from the primary Gazette notification text
     ),
 ]

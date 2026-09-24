@@ -50,6 +50,33 @@ def test_catalogue_import_creates_frameworks_and_obligations(engine_db):
         assert obligation.verified is expected, regime
 
 
+def test_cross_framework_finding_mapping_covers_at_least_two_frameworks(engine_db):
+    """A gap found when asked to verify Task 17's claims directly: the
+    finding-to-control mapping (build-spec.md section 3.6) only ever pointed
+    at NIST CSF, even after RBI/SEBI controls existed in the catalogue.
+    STARTER_CROSS_FRAMEWORK_MAPPING in rbi_sebi_import.py fixes that for at
+    least one finding rule."""
+    session = engine_db()
+    result = import_rbi_sebi_catalogue(session)
+    session.commit()
+    assert result["n_mappings_created"] >= 1
+
+    session = engine_db()
+    fws = {f.id: f.name for f in session.query(m.Framework).all()}
+    controls = {c.id: c for c in session.query(m.FrameworkControl).all()}
+    mappings = session.query(m.ControlMapping).filter_by(from_kind="finding_rule").all()
+
+    frameworks_by_rule: dict[str, set[str]] = {}
+    for mp in mappings:
+        control = controls.get(mp.framework_control_id)
+        if control:
+            frameworks_by_rule.setdefault(mp.from_id, set()).add(fws.get(control.framework_id))
+
+    assert any(len(fw_names) >= 2 for fw_names in frameworks_by_rule.values()), (
+        "expected at least one finding_rule mapped to controls in >=2 frameworks"
+    )
+
+
 def test_import_is_idempotent(engine_db):
     session = engine_db()
     import_rbi_sebi_catalogue(session)
@@ -61,6 +88,7 @@ def test_import_is_idempotent(engine_db):
     session.commit()
     assert result["rbi_framework_id"] is None  # already existed, not re-created
     assert result["n_obligations_created"] == 0
+    assert result["n_mappings_created"] == 0
 
 
 def test_one_detection_timestamp_produces_all_clocks_before_dpdp_commencement(engine_db):

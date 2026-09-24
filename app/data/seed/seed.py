@@ -296,6 +296,40 @@ def seed(reset: bool = True) -> None:
         _make_data_source(session)
 
 
+def _print_seed_summary() -> None:
+    """Prints a count of what `seed()` just generated plus a handful of real
+    sample rows, so running the generator shows concrete evidence of what
+    landed in the DB rather than a single "done" line."""
+    with session_scope() as session:
+        n_assets = session.query(m.Asset).count()
+        n_findings = session.query(m.Finding).count()
+        n_scenarios = session.query(m.ThreatScenario).count()
+        n_control_types = session.query(m.ControlType).count()
+        n_frameworks = session.query(m.Framework).count()
+        n_framework_controls = session.query(m.FrameworkControl).count()
+
+        print(
+            f"Seeded database at {settings.database_url} with seed={settings.default_seed}:\n"
+            f"  {n_assets} assets, {n_findings} findings, {n_scenarios} threat scenarios, "
+            f"{n_control_types} control types, {n_frameworks} frameworks "
+            f"({n_framework_controls} controls total)"
+        )
+
+        sample_assets = session.query(m.Asset).limit(3).all()
+        print("\n  Sample assets:")
+        for a in sample_assets:
+            print(f"    {a.hostname:<28} type={a.type:<14} environment={a.environment:<8} criticality={a.criticality:.2f}")
+
+        sample_findings = session.query(m.Finding).limit(3).all()
+        print("\n  Sample findings:")
+        for f in sample_findings:
+            ref = f.rule_id or f.cve_id or "(unlabeled)"
+            print(f"    asset_id={f.asset_id[:8]}...  {ref:<20} status={f.status:<10} severity_weight={f.severity_weight}")
+
+        print("\n  (Run `make fetch-vuln-intel` separately to attach real CISA KEV "
+              "vulnerabilities -- none are seeded here.)")
+
+
 if __name__ == "__main__":
     seed()
-    print(f"Seeded database at {settings.database_url} with seed={settings.default_seed}")
+    _print_seed_summary()

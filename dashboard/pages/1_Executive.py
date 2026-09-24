@@ -78,9 +78,17 @@ fig.add_trace(
         hovertemplate="Loss exceeds %{x:,.0f}<br>P = %{y:.2%}<extra></extra>",
     )
 )
-fig.update_layout(xaxis_title="Annual loss (INR)", yaxis_title="P(loss exceeds X)")
+fig.update_layout(
+    xaxis_title="Annual loss (INR)",
+    yaxis_title="P(loss exceeds X)",
+    yaxis_type="log",
+)
 apply_layout(fig, height=350)
 st.plotly_chart(fig, width="stretch")
+st.caption(
+    "Log-scaled y-axis: a loss exceedance curve's whole point is the thin, high-value tail, "
+    "which a linear axis flattens into an invisible sliver near zero."
+)
 
 st.subheader("Top 5 Scenarios by EAL")
 scenario_names = {}

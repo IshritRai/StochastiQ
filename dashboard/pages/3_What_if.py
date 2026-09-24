@@ -6,7 +6,6 @@ a fresh engine run (CLAUDE.md rule 1).
 
 from __future__ import annotations
 
-import numpy as np
 import streamlit as st
 
 from app.config import settings
@@ -15,6 +14,7 @@ from app.data.db import session_scope
 from app.engine.contracts import apply_controls, run_scenario
 from dashboard.format_utils import format_inr
 from dashboard.theme import inject_page_css
+from dashboard.whatif_logic import build_overrides, paired_delta_eal_ci, paired_stats
 
 st.set_page_config(page_title="What-if | StochastiQ", layout="wide", page_icon="\U0001f6e1️")
 st.markdown(inject_page_css(), unsafe_allow_html=True)
@@ -50,39 +50,51 @@ if not control_types:
 
 st.write("Adjust control coverage below and compare against the measured baseline.")
 
-overrides = {}
+slider_defaults: dict[str, int] = {}
+slider_values: dict[str, int] = {}
 cols = st.columns(len(control_types))
 for col, (ct_id, ct) in zip(cols, control_types.items()):
     baseline_pct = measured_coverage[ct_id] * 100
+    default_pct = round(baseline_pct)
+    slider_defaults[ct_id] = default_pct
     with col:
         st.caption(f"{ct.name}\n\nMeasured: {baseline_pct:.0f}%")
-        new_pct = st.slider(ct.name, 0, 100, round(baseline_pct), key=f"slider-{ct_id}")
-        overrides[ct_id] = new_pct / 100.0
+        slider_values[ct_id] = st.slider(ct.name, 0, 100, default_pct, key=f"slider-{ct_id}")
 
-def _p10_p90(loss_vector: np.ndarray) -> tuple[float, float]:
-    p10, p90 = np.percentile(loss_vector, [10, 90])
-    return float(p10), float(p90)
 
+overrides = build_overrides(slider_values, slider_defaults)
 
 seed = settings.default_seed
 baseline = run_scenario(scenario_id, overrides={}, seed=seed)
 modified = apply_controls(scenario_id, control_overrides=overrides, seed=seed)
 
-baseline_p10, baseline_p90 = _p10_p90(baseline.loss_vector)
-modified_p10, modified_p90 = _p10_p90(modified.loss_vector)
-delta_eal = modified.summary.eal - baseline.summary.eal
+# Common random numbers (same seed, same iteration order) make baseline and
+# modified PAIRED per iteration, so their difference is a proper per-draw
+# delta-EAL sample -- a much tighter, more honest interval than P10-P90 of
+# either side's raw annual-loss distribution (which is dominated by Poisson
+# zero-inflation, not by uncertainty in the control's effect).
+delta_eal, delta_ci_low, delta_ci_high = paired_delta_eal_ci(baseline.loss_vector, modified.loss_vector)
 delta_var95 = modified.summary.var95 - baseline.summary.var95
+
+baseline_stats = paired_stats(baseline.loss_vector)
+modified_stats = paired_stats(modified.loss_vector)
 
 col1, col2, col3 = st.columns(3)
 col1.metric("Baseline EAL", format_inr(baseline.summary.eal))
-col1.caption(f"P10–P90: {format_inr(baseline_p10)} – {format_inr(baseline_p90)}")
+col1.caption(
+    f"P(any loss): {baseline_stats['p_any_loss']:.1%} · "
+    f"Loss | event: {format_inr(baseline_stats['loss_given_event'])} · "
+    f"VaR99: {format_inr(baseline_stats['var99'])}"
+)
 col2.metric(
     "What-if EAL",
     format_inr(modified.summary.eal),
     delta=format_inr(delta_eal),
     delta_color="inverse",
 )
-col2.caption(f"P10–P90: {format_inr(modified_p10)} – {format_inr(modified_p90)}")
+col2.caption(
+    f"Δ-EAL P10–P90 (paired): {format_inr(delta_ci_low)} – {format_inr(delta_ci_high)}"
+)
 col3.metric(
     "What-if VaR95",
     format_inr(modified.summary.var95),
@@ -90,13 +102,15 @@ col3.metric(
     delta_color="inverse",
 )
 col3.caption(
-    f"Δ P10–P90: {format_inr(modified_p10 - baseline_p10)} – "
-    f"{format_inr(modified_p90 - baseline_p90)}"
+    f"P(any loss): {modified_stats['p_any_loss']:.1%} · "
+    f"Loss | event: {format_inr(modified_stats['loss_given_event'])} · "
+    f"VaR99: {format_inr(modified_stats['var99'])}"
 )
 
 st.caption(
     f"Baseline run `{baseline.run_id}`, what-if run `{modified.run_id}`, both seed={seed} "
     "(common random numbers, so a no-change slider gives exactly delta-EAL = 0). "
-    "Ranges shown are P10-P90 of the simulated annual-loss distribution, not false precision "
-    "on a single number (build-spec.md section 3.5)."
+    "The Δ-EAL P10-P90 range comes from the PAIRED per-iteration difference "
+    "(modified minus baseline, same random draws), not from either side's raw "
+    "annual-loss spread (build-spec.md section 3.5)."
 )

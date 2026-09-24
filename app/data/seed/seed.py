@@ -11,6 +11,7 @@ database or the model").
 
 from __future__ import annotations
 
+import datetime as dt
 import json
 
 import numpy as np
@@ -217,14 +218,23 @@ def _make_scenario_control_effects(
 def _make_sample_findings(session, assets: list[m.Asset], rng: np.random.Generator) -> None:
     """A handful of rule-based findings, so the compliance heatmap (Task 6)
     has a real mix of gap/met statuses to show rather than an all-unknown
-    page. Roughly a third are pre-remediated so both statuses appear."""
+    page. Roughly a third are pre-remediated so both statuses appear.
+
+    `first_seen` is backdated (assumption: uniform 1-180 days ago) rather than
+    left at the seed's own run time -- an "ageing" remediation backlog
+    (dashboard's Technical page) is meaningless if every finding was
+    discovered "now" (CLAUDE.md: no invented realism, but no invented
+    freshness either)."""
     if not assets:
         return
+    now = dt.datetime.now(dt.UTC)
     for rule_id, _title, _category, weight in STARTER_FINDING_RULES:
         n_findings = int(rng.integers(1, 4))
         chosen_assets = rng.choice(assets, size=min(n_findings, len(assets)), replace=False)
         for asset in chosen_assets:
             status = "remediated" if rng.random() < 0.35 else "open"
+            age_days = int(rng.integers(1, 181))
+            first_seen = (now - dt.timedelta(days=age_days)).replace(tzinfo=None)
             session.add(
                 m.Finding(
                     asset_id=asset.id,
@@ -232,6 +242,8 @@ def _make_sample_findings(session, assets: list[m.Asset], rng: np.random.Generat
                     rule_id=rule_id,
                     severity_weight=weight,
                     status=status,
+                    first_seen=first_seen,
+                    last_seen=first_seen,
                     remediated_at=None,
                 )
             )

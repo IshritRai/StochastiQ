@@ -173,12 +173,24 @@ def _default_tail_cap(session, scenario: m.ThreatScenario) -> float | None:
 
 
 def run_scenario_impl(scenario_id: str, overrides: dict, seed: int, persist: bool = True):
+    """Runs one scenario. `seed` is the caller-facing seed (e.g. the org-level
+    seed, or the seed a user typed into the What-if page); the actual draws
+    use `_derive_seed(seed, scenario_id)` so that:
+      (a) run_scenario(sid, ..., seed=S) and run_org(..., seed=S) -- which
+          internally calls this same function for scenario `sid` with the
+          SAME seed=S -- always produce byte-identical results for that
+          scenario (this is the ONE shared seeding function both paths use;
+          do not derive a seed anywhere else), and
+      (b) two different scenarios under the same org-level seed still draw
+          INDEPENDENT random numbers from each other (build-spec.md risk R3).
+    """
     from app.engine.contracts import RunResult  # local import: avoid circular import
 
     overrides = overrides or {}
     n_iter = overrides.get("n_iter", settings.default_n_iter)
     control_state_overrides = overrides.get("control_state_overrides")
     exposure_mult = overrides.get("exposure_mult", 1.0)
+    effective_seed = _derive_seed(seed, scenario_id)
 
     with session_scope() as session:
         scenario = session.get(m.ThreatScenario, scenario_id)
@@ -195,9 +207,9 @@ def run_scenario_impl(scenario_id: str, overrides: dict, seed: int, persist: boo
         if tail_cap is not None:
             inputs["tail_cap"] = tail_cap
 
-        loss_vector = simulate(inputs, seed=seed, n_iter=n_iter)
+        loss_vector = simulate(inputs, seed=effective_seed, n_iter=n_iter)
         summary = summarize(loss_vector)
-        inputs_hash = _hash_inputs(inputs, seed, n_iter)
+        inputs_hash = _hash_inputs(inputs, effective_seed, n_iter)
         run_id = str(uuid.uuid4())
 
         if persist:
@@ -244,8 +256,11 @@ def run_org_impl(overrides: dict, seed: int, persist: bool = True):
         raise ValueError("No active scenarios found to build an org-level run from")
 
     scenario_overrides = {k: v for k, v in overrides.items() if k != "scenarios"}
+    # Pass the SAME org-level seed to every scenario; run_scenario_impl is the
+    # one place that derives the effective per-scenario seed (see its
+    # docstring), so this equals run_scenario(sid, ..., seed=seed) exactly.
     scenario_results = {
-        sid: run_scenario_impl(sid, scenario_overrides, seed=_derive_seed(seed, sid), persist=False)
+        sid: run_scenario_impl(sid, scenario_overrides, seed=seed, persist=False)
         for sid in scenario_ids
     }
 

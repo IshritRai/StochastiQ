@@ -45,7 +45,13 @@ class Plan:
     knapsack_delta_eal: float  # sum of standalone deltas (the additive estimate)
     joint_delta_eal: float  # re-simulated jointly (the real answer)
     exceeds_gordon_loeb: bool
+    baseline_var99: float = 0.0
+    joint_var99: float = 0.0
     budget_curve: list[tuple[float, float]] = field(default_factory=list)  # (budget, joint_delta_eal)
+
+    @property
+    def joint_delta_var99(self) -> float:
+        return self.baseline_var99 - self.joint_var99
 
 
 def _annualized_cost(option: m.ControlOption) -> float:
@@ -57,6 +63,13 @@ def _org_eal(control_overrides: dict[str, float] | None, seed: int, n_iter: int)
     if control_overrides:
         overrides["control_state_overrides"] = control_overrides
     return run_org(overrides=overrides, seed=seed).summary.eal
+
+
+def _org_summary(control_overrides: dict[str, float] | None, seed: int, n_iter: int):
+    overrides = {"n_iter": n_iter}
+    if control_overrides:
+        overrides["control_state_overrides"] = control_overrides
+    return run_org(overrides=overrides, seed=seed).summary
 
 
 def evaluate_options(seed: int, n_iter: int | None = None) -> tuple[float, list[OptionEvaluation]]:
@@ -108,13 +121,14 @@ def _knapsack_select(evaluations: list[OptionEvaluation], budget: float) -> list
 def optimize(budget: float, seed: int, n_iter: int | None = None, persist: bool = True) -> Plan:
     n_iter = n_iter or settings.default_n_iter
     baseline_eal, evaluations = evaluate_options(seed, n_iter)
+    baseline_summary = _org_summary(None, seed, n_iter)
 
     selected = _knapsack_select(evaluations, budget)
     knapsack_delta_eal = sum(ev.standalone_delta_eal for ev in selected)
 
     joint_overrides = {ev.control_type_id: _target_coverage_for(ev.option_id) for ev in selected}
-    joint_eal = _org_eal(joint_overrides, seed, n_iter) if joint_overrides else baseline_eal
-    joint_delta_eal = baseline_eal - joint_eal
+    joint_summary = _org_summary(joint_overrides, seed, n_iter) if joint_overrides else baseline_summary
+    joint_delta_eal = baseline_eal - joint_summary.eal
 
     plan_id = str(uuid.uuid4())
     plan = Plan(
@@ -125,6 +139,8 @@ def optimize(budget: float, seed: int, n_iter: int | None = None, persist: bool 
         knapsack_delta_eal=knapsack_delta_eal,
         joint_delta_eal=joint_delta_eal,
         exceeds_gordon_loeb=budget > GORDON_LOEB_FRACTION * baseline_eal,
+        baseline_var99=baseline_summary.var99,
+        joint_var99=joint_summary.var99,
     )
 
     if persist:

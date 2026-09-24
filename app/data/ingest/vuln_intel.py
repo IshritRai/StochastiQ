@@ -149,7 +149,19 @@ def import_vuln_intel(n_cves: int = 15, seed: int | None = None) -> dict:
             n_links = int(rng.integers(1, 3))
             linked_assets = rng.choice(assets, size=min(n_links, len(assets)), replace=False)
             for asset in linked_assets:
-                session.add(m.AssetSoftware(asset_id=asset.id, software_id=software.id))
+                # The synthetic assets carry no real software inventory, so
+                # there is nothing to match this real KEV vendor/product
+                # against -- the asset is an arbitrary sampled placement, not
+                # a verified match. Recorded honestly rather than implying
+                # precision the data doesn't have (see AssetSoftware docstring).
+                session.add(
+                    m.AssetSoftware(
+                        asset_id=asset.id,
+                        software_id=software.id,
+                        match_basis="synthetic_no_inventory",
+                        match_confidence=0.0,
+                    )
+                )
                 status = "remediated" if rng.random() < 0.3 else "open"
                 session.add(
                     m.Finding(

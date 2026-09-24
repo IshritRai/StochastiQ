@@ -134,6 +134,14 @@ class AssetSoftware(Base):
     asset_id: Mapped[str] = mapped_column(ForeignKey("asset.id"), nullable=False)
     software_id: Mapped[str] = mapped_column(ForeignKey("software.id"), nullable=False)
     seen_at: Mapped[dt.datetime] = mapped_column(DateTime, default=_now)
+    # How this link was established. "declared": a real asset inventory named
+    # this vendor/product on this asset. "synthetic_no_inventory": the
+    # synthetic assets have no real software inventory to match a real KEV
+    # CVE's vendor/product against, so the link is an arbitrary sampled
+    # placement -- match_confidence records that honestly rather than
+    # implying a verified match (CLAUDE.md: label which parts are synthetic).
+    match_basis: Mapped[str] = mapped_column(String, default="declared")
+    match_confidence: Mapped[float] = mapped_column(Float, default=1.0)
 
 
 class Account(Base):

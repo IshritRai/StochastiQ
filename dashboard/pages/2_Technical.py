@@ -21,6 +21,7 @@ st.title("Technical View")
 with session_scope() as session:
     assets = session.query(m.Asset).all()
     findings = session.query(m.Finding).all()
+    hostnames = {a.id: a.hostname for a in assets}
 
     asset_rows = [
         {
@@ -36,7 +37,7 @@ with session_scope() as session:
     ]
     finding_rows = [
         {
-            "asset_id": f.asset_id,
+            "hostname": hostnames.get(f.asset_id, f.asset_id),
             "finding_type": f.finding_type,
             "cve_id": f.cve_id,
             "severity_weight": f.severity_weight,

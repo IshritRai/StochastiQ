@@ -66,14 +66,22 @@ st.markdown(eval_df.to_html(escape=False, index=False), unsafe_allow_html=True)
 
 st.subheader("Choose a set under a budget")
 max_cost = sum(ev.annual_cost for ev in evaluations) or 1.0
-budget = st.slider(
-    "Annual budget (INR)", min_value=0.0, max_value=float(max_cost), value=float(max_cost) * 0.3, step=max_cost / 100
+_LAKH = 1_00_000
+max_cost_lakh = max_cost / _LAKH
+budget_lakh = st.slider(
+    "Annual budget",
+    min_value=0.0,
+    max_value=float(max_cost_lakh),
+    value=float(max_cost_lakh) * 0.3,
+    step=max_cost_lakh / 100,
+    format="₹%.2f L",
 )
+budget = budget_lakh * _LAKH
 st.caption(f"Budget: {format_inr(budget)}")
 
 plan = optimize(budget=budget, seed=seed, n_iter=n_iter, persist=False)
 
-col1, col2, col3 = st.columns(3)
+col1, col2, col3, col4 = st.columns(4)
 col1.metric("Baseline EAL", format_inr(plan.baseline_eal))
 col2.metric(
     "Knapsack estimate (additive ΔEAL)",
@@ -84,9 +92,15 @@ col3.metric(
     format_inr(plan.joint_delta_eal),
     delta=format_inr(plan.joint_delta_eal - plan.knapsack_delta_eal),
 )
+col4.metric(
+    "Joint re-simulated ΔVaR99",
+    format_inr(plan.joint_delta_var99),
+)
 st.caption(
     "The gap between the knapsack's additive estimate and the joint re-simulated result "
-    "is expected when controls interact (build-spec.md section 3.4) -- it is shown, not hidden."
+    "is expected when controls interact (build-spec.md section 3.4) -- it is shown, not hidden. "
+    "ΔVaR99 is the reduction in the 99th-percentile annual loss from the SAME joint re-simulation, "
+    "shown alongside ΔEAL since a control can move the tail without moving the mean much."
 )
 
 if plan.exceeds_gordon_loeb:

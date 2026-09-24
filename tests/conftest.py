@@ -20,7 +20,9 @@ def engine_db(monkeypatch, tmp_path):
 
     db_path = tmp_path / "engine_test.db"
     test_engine = create_engine(f"sqlite:///{db_path}", connect_args={"check_same_thread": False})
-    test_session_local = sessionmaker(bind=test_engine, autoflush=False, autocommit=False)
+    test_session_local = sessionmaker(
+        bind=test_engine, autoflush=False, autocommit=False, expire_on_commit=False
+    )
 
     monkeypatch.setattr(db_module, "engine", test_engine)
     monkeypatch.setattr(db_module, "SessionLocal", test_session_local)

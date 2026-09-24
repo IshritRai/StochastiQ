@@ -4,10 +4,13 @@ CSF 2.0 heatmap by Function, computed from finding/control-coverage status
 
 from __future__ import annotations
 
+import datetime as dt
+
 import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
 
+from app.compliance.incident_clock import compute_incident_clocks
 from app.compliance.status import compliance_status
 from app.data import models as m
 from app.data.db import session_scope
@@ -115,3 +118,84 @@ if findings:
     st.dataframe(finding_rows, hide_index=True, width="stretch")
 else:
     st.info("No findings yet.")
+
+st.subheader("Indian Regulatory Catalogues (PLAN.md Task 17)")
+st.caption(
+    "RBI's 2026 Cybersecurity Directions and SEBI's CSCRF, hand-built from paragraph/"
+    "standard IDs (never the regulator's full clause text, per CLAUDE.md's ISO/CIS "
+    "licensing rule extended here). Every row below is honestly `verified=False`: "
+    "sourced from secondary commentary in this pass, not confirmed against rbi.org.in "
+    "or sebi.gov.in directly (see app/compliance/rbi_sebi_data.py's module docstring) "
+    "-- shown as a red ⚠️ badge rather than silently promoted for demo polish."
+)
+with session_scope() as session:
+    reg_frameworks = [
+        f
+        for f in session.query(m.Framework).all()
+        if f.name != "NIST CSF"
+    ]
+    reg_controls = (
+        session.query(m.FrameworkControl)
+        .filter(m.FrameworkControl.framework_id.in_([f.id for f in reg_frameworks]))
+        .all()
+        if reg_frameworks
+        else []
+    )
+
+if reg_frameworks:
+    fw_by_id = {f.id: f.name for f in reg_frameworks}
+    reg_df = pd.DataFrame(
+        [
+            {
+                "Framework": fw_by_id[c.framework_id],
+                "ID": c.control_id,
+                "Short title": c.short_title,
+                "Verified": "✅" if c.verified else "⚠️ unverified",
+                "Source": c.source_ref,
+            }
+            for c in reg_controls
+        ]
+    ).sort_values(["Framework", "ID"])
+    st.dataframe(reg_df, hide_index=True, width="stretch")
+else:
+    st.info("RBI/SEBI catalogues not imported yet. Run `make seed`.")
+
+st.subheader("Incident-Clock Calculator")
+st.caption(
+    "Enter one detection timestamp; every applicable regulatory reporting deadline is "
+    "computed from that single timestamp plus the ReportingObligation rows in the DB "
+    "(DAKSH 6h, CERT-In 6h, SEBI 6h/24h/3d/7d/30d/75d, DPDP 72h). DPDP is gated on its "
+    "13 May 2027 commencement date -- a detection before then shows 'not yet in force' "
+    "rather than a real deadline."
+)
+detect_col, entity_col = st.columns(2)
+with detect_col:
+    detected_date = st.date_input("Detection date", value=dt.date(2026, 10, 1))
+    detected_time = st.time_input("Detection time (UTC)", value=dt.time(9, 0))
+with entity_col:
+    entity_type = st.selectbox(
+        "Entity type",
+        ["bank", "nbfc", "market_infrastructure_institution", "intermediary", "data_fiduciary", "any_body_corporate"],
+    )
+
+detected_at = dt.datetime.combine(detected_date, detected_time, tzinfo=dt.UTC)
+with session_scope() as session:
+    clocks = compute_incident_clocks(session, detected_at, entity_type=entity_type)
+
+if clocks:
+    clock_df = pd.DataFrame(
+        [
+            {
+                "Regime": c.regime,
+                "Recipient": c.recipient,
+                "Clock (hours)": c.clock_hours,
+                "Deadline (UTC)": c.deadline.strftime("%Y-%m-%d %H:%M") if c.deadline else "—",
+                "Status": "In force" if c.in_force else (c.note or "Not yet in force"),
+                "Verified": "✅" if c.verified else "⚠️ unverified",
+            }
+            for c in clocks
+        ]
+    )
+    st.dataframe(clock_df, hide_index=True, width="stretch")
+else:
+    st.info(f"No reporting obligations apply to entity type '{entity_type}'.")

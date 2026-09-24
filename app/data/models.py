@@ -436,6 +436,12 @@ class FrameworkControl(Base):
     parent_id: Mapped[str | None] = mapped_column(String, nullable=True)
     status: Mapped[str] = mapped_column(String, default="active")  # active|withdrawn
     source_ref: Mapped[str | None] = mapped_column(String, nullable=True)
+    # PLAN.md Task 17: True only if this exact ID/title was confirmed by
+    # directly reading the regulator's own primary-source page/PDF in this
+    # session; False (the honest default) means it is sourced from
+    # secondary commentary and must be checked before being relied on in a
+    # demo (CLAUDE.md: never guess a number/ID; build-spec.md section 5).
+    verified: Mapped[bool] = mapped_column(Boolean, default=False)
 
 
 class ControlMapping(Base):
@@ -492,6 +498,7 @@ class ReportingObligation(Base):
     trigger: Mapped[str] = mapped_column(String, nullable=False)
     effective_from: Mapped[dt.date | None] = mapped_column(DateTime, nullable=True)
     source_ref: Mapped[str | None] = mapped_column(String, nullable=True)
+    verified: Mapped[bool] = mapped_column(Boolean, default=False)  # see FrameworkControl.verified
     verified: Mapped[bool] = mapped_column(Boolean, default=False)
 
 

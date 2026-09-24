@@ -17,6 +17,7 @@ import json
 import numpy as np
 
 from app.compliance.csf_import import STARTER_FINDING_RULES, import_csf
+from app.compliance.rbi_sebi_import import import_rbi_sebi_catalogue
 from app.config import settings
 from app.data import models as m
 from app.data.db import engine, init_db, session_scope
@@ -290,6 +291,7 @@ def seed(reset: bool = True) -> None:
         scenarios = _make_scenarios(session)
         _make_scenario_control_effects(session, scenarios, control_types)
         import_csf(session)
+        import_rbi_sebi_catalogue(session)
         _make_sample_findings(session, assets, rng)
         _make_data_source(session)
 

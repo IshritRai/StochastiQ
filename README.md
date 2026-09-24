@@ -81,8 +81,20 @@ was clipped), a tornado/sensitivity chart perturbing each Risk Contract
 factor by ±20% with common random numbers, and Fragile/Unstable stability
 flags.
 
-Still open: the rest of the L2 sweep (Tasks 17, 18: RBI/SEBI catalogues,
-incident clocks, compliance ₹ link) and demo hardening (Task 21) are next.
+Task 17 is also done: hand-built RBI 2026 Cybersecurity Directions + SEBI
+CSCRF catalogues (`app/compliance/rbi_sebi_data.py`, paragraph/standard IDs
+and short titles only) and the incident-clock engine
+(`app/compliance/incident_clock.py` — DAKSH 6h, CERT-In 6h, SEBI 6h/24h/
+3d/7d/30d/75d, DPDP 72h gated on its 13 May 2027 commencement date). Every
+row is honestly `verified=False`: researched via secondary sources in this
+pass (WebSearch over legal/industry commentary), not confirmed against
+rbi.org.in or sebi.gov.in directly — shown as an unverified badge on the
+Compliance page rather than silently promoted. The Compliance page's new
+"Incident-Clock Calculator" turns one detection timestamp + entity type
+into every applicable deadline, live from the DB.
+
+Still open: Task 18 (risk-to-compliance ₹ link, trend chart, drill-down)
+and demo hardening (Task 21) are next.
 
 See `PLAN.md` for the full task-by-task order, the cut line, and the
 proposed assumption values (multiplier bounds, tail cap, control efficacy

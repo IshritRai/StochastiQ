@@ -196,6 +196,23 @@ def _make_scenarios(session) -> list[m.ThreatScenario]:
     return [ts for ts, _ in scenarios]
 
 
+def _make_scenario_control_effects(
+    session, scenarios: list[m.ThreatScenario], control_types: dict[str, m.ControlType]
+) -> None:
+    scenarios_by_name = {ts.name: ts for ts in scenarios}
+    for scenario_name, control_name, factor in cfg.SCENARIO_CONTROL_LINKS:
+        ts = scenarios_by_name[scenario_name]
+        ct = control_types[control_name]
+        session.add(
+            m.ScenarioControlEffect(
+                scenario_id=ts.id,
+                control_type_id=ct.id,
+                factor=factor,
+                effect_model="multiplicative",
+            )
+        )
+
+
 def _make_data_source(session) -> m.DataSource:
     ds = m.DataSource(name="hand-written seed generator", kind="synthetic", licence_note=None)
     session.add(ds)
@@ -234,7 +251,8 @@ def seed(reset: bool = True) -> None:
         control_types = _make_control_types(session)
         _make_control_states(session, bus, control_types, maturity, rng)
         _make_control_options(session, control_types, rng)
-        _make_scenarios(session)
+        scenarios = _make_scenarios(session)
+        _make_scenario_control_effects(session, scenarios, control_types)
         _make_data_source(session)
 
 

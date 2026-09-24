@@ -186,3 +186,26 @@ THREAT_SCENARIOS: list[ThreatScenarioSpec] = [
         "compliance layer (Task 6), so this scenario doubles as a compliance demo hook.",
     ),
 ]
+
+# Links each scenario to the controls that affect it, and which top-level
+# factor they scale (build-spec.md section 1.4 step 3 / O-RA section 5.5's
+# four control categories). This is what makes apply_controls() move a
+# scenario's EAL at all -- without a row here, a control exists in the DB
+# but has no effect on any scenario (PLAN.md Task 3/7).
+SCENARIO_CONTROL_LINKS: list[tuple[str, str, str]] = [
+    ("Ransomware on lending core systems", "EDR coverage", "Vuln"),
+    ("Ransomware on lending core systems", "Patch / vulnerability management", "Vuln"),
+    ("Ransomware on lending core systems", "SIEM / monitoring", "SLEF"),
+    ("Business email compromise / fraudulent transfer", "MFA on privileged accounts", "Vuln"),
+    ("Exposed customer data store (KYC/PII)", "MFA on privileged accounts", "Vuln"),
+    ("Exposed customer data store (KYC/PII)", "Network segmentation", "TEF"),
+    ("Unpatched internet-facing CVE exploitation (KEV)", "Patch / vulnerability management", "Vuln"),
+    ("Unpatched internet-facing CVE exploitation (KEV)", "EDR coverage", "Vuln"),
+    ("Insider misuse of privileged access", "MFA on privileged accounts", "Vuln"),
+    ("Insider misuse of privileged access", "SIEM / monitoring", "SLEF"),
+    ("Third-party / vendor compromise", "Network segmentation", "TEF"),
+    ("Third-party / vendor compromise", "MFA on privileged accounts", "Vuln"),
+    ("Distributed denial of service on trading/broking platform", "Network segmentation", "TEF"),
+    ("Cloud misconfiguration (IAM / storage)", "Patch / vulnerability management", "Vuln"),
+    ("Cloud misconfiguration (IAM / storage)", "MFA on privileged accounts", "Vuln"),
+]

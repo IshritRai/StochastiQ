@@ -1,10 +1,11 @@
 """Interface contracts, fixed in build-spec.md section 2.2.
 
-Stubs only (PLAN.md Task 2/3). Every function raises NotImplementedError so
-the guardrail tests in tests/test_engine_guardrails.py fail loudly against
-the stub, proving they are real assertions and not tautologies, before any
-implementation lands (CLAUDE.md: "tests before dependents build on a
-function").
+Thin public wrappers: the dataclasses live here (so risk_contract.py can
+import them back without a circular import), and each function delegates to
+its real implementation in monte_carlo.py / risk_contract.py. Downstream
+code (API routers, dashboard pages, tests) should import from this module,
+not from the implementation modules directly -- this is the stable contract
+build-spec.md section 2.2 asks the whole project to agree on.
 """
 
 from __future__ import annotations
@@ -12,8 +13,6 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 import numpy as np
-
-ENGINE_VERSION = "0.0.0-stub"
 
 
 @dataclass
@@ -48,37 +47,43 @@ class OrgResult:
 
 
 def simulate(inputs: dict, seed: int, n_iter: int) -> np.ndarray:
-    """Event-level Monte Carlo per the Risk Contract (build-spec.md section 1.4).
+    """Event-level Monte Carlo per the Risk Contract (build-spec.md section 1.4)."""
+    from app.engine.monte_carlo import simulate as _simulate
 
-    Per iteration: draw N ~ Poisson(TEF x Vuln'); for each of the N events,
-    draw a primary loss (lognormal) and, with probability SLEF, add a
-    secondary loss; sum and truncate at the documented tail cap.
-    Returns the annual-loss vector (length n_iter).
-    """
-    raise NotImplementedError("Task 3: implement event-level Monte Carlo simulate()")
+    return _simulate(inputs, seed, n_iter)
 
 
 def summarize(loss_vector: np.ndarray) -> SummaryResult:
     """EAL = mean; VaR95/VaR99 = percentiles of the same vector; LEC = 1 - empirical CDF."""
-    raise NotImplementedError("Task 3: implement summarize()")
+    from app.engine.monte_carlo import summarize as _summarize
+
+    return _summarize(loss_vector)
 
 
 def run_scenario(scenario_id: str, overrides: dict, seed: int) -> RunResult:
     """Reads the DB, applies the full Risk Contract for one scenario."""
-    raise NotImplementedError("Task 3: implement run_scenario()")
+    from app.engine.risk_contract import run_scenario_impl
+
+    return run_scenario_impl(scenario_id, overrides, seed)
 
 
 def run_org(overrides: dict, seed: int) -> OrgResult:
     """Sums scenario loss vectors iteration-by-iteration. Never sum VaR directly (risk R3)."""
-    raise NotImplementedError("Task 4: implement run_org()")
+    from app.engine.risk_contract import run_org_impl
+
+    return run_org_impl(overrides, seed)
 
 
 def attribute(run_id: str, method: str = "allocation") -> list[dict]:
     """Allocates scenario EAL downward to assets/vulns/control-gaps. Returns entity/eal_share rows."""
-    raise NotImplementedError("Task 4: implement attribute()")
+    from app.engine.risk_contract import attribute_impl
+
+    return attribute_impl(run_id, method)
 
 
 def apply_controls(scenario_id: str, control_overrides: dict, seed: int) -> RunResult:
     """Mutates control state/effects in memory and reruns with the SAME random draws
     (common random numbers), so ΔEAL isn't buried in Monte Carlo noise (risk R3)."""
-    raise NotImplementedError("Task 7: implement apply_controls()")
+    from app.engine.risk_contract import apply_controls_impl
+
+    return apply_controls_impl(scenario_id, control_overrides, seed)

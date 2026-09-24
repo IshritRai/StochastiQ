@@ -33,7 +33,7 @@ def _import_framework(session, name, version, effective_date, source_url, contro
     session.add(framework)
     session.flush()
 
-    for control_id, short_title, source_ref in controls:
+    for control_id, short_title, source_ref, verified in controls:
         session.add(
             m.FrameworkControl(
                 framework_id=framework.id,
@@ -42,7 +42,7 @@ def _import_framework(session, name, version, effective_date, source_url, contro
                 parent_id=None,
                 status="active",
                 source_ref=source_ref,
-                verified=False,  # see app/compliance/rbi_sebi_data.py module docstring
+                verified=verified,
             )
         )
     session.flush()

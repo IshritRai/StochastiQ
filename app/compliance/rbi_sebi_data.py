@@ -22,91 +22,106 @@ a follow-up primary-source pass on 2026-09-24:
   exist via sebi.gov.in but its full text (paragraph-level detail on any
   changed timelines) was not fetchable in this pass -- SEBI_CONTROLS rows
   sourced only from secondary commentary remain `verified=False`.
-- RBI: the actual 2026 Direction was identified and its real circular
-  number confirmed (RBI/DoS/2026-27/461, "RBI (Non-Banking Financial
-  Companies - Cybersecurity, Technology: Risk, Resilience and Assurance
-  Framework) Directions, 2026", issued 31 July 2026), but the PDF itself
-  (rbidocs.rbi.org.in) sits behind a CAPTCHA that could not be passed in
-  this pass, so the exact paragraph number for the DAKSH 6-hour reporting
-  requirement is still unconfirmed against primary text. RBI_CONTROLS and
-  the rbi_daksh REPORTING_OBLIGATIONS row remain `verified=False`.
+- RBI: the actual 2026 Direction was identified (RBI/DoS/2026-27/461,
+  "Reserve Bank of India (Non-Banking Financial Companies - Cybersecurity,
+  Technology: Risk, Resilience and Assurance Framework) Directions, 2026",
+  issued 31 July 2026). Its rbidocs.rbi.org.in PDF is normally CAPTCHA-gated,
+  but the user supplied a downloaded copy of the exact same file in this
+  session, which was read in full. Every RBI_CONTROLS row and the rbi_daksh
+  REPORTING_OBLIGATIONS row below now cite a real paragraph number from that
+  primary text and are `verified=True`; paragraphs 28 and 141 both state,
+  verbatim, "The NBFC shall report cyber incidents on DAKSH platform...
+  within six hours of detection."
 - CERT-In's 6-hour requirement (cert_in row) is a standing 2022 direction
   under IT Act s.70B(6), independently well-established and kept
   `verified=True`.
+- DPDP's 72-hour breach-notification clock and SEBI_CONTROLS (still
+  secondary-sourced paragraph/standard IDs) remain `verified=False`.
 
-Before a real demo: pass the RBI PDF through OCR/manual retrieval to get
-past the CAPTCHA and confirm the exact DAKSH paragraph number, and fetch
-the SEBI FIRE-format circular's full text if any of the SEBI_CONTROLS rows
-need promoting.
+Before a real demo: fetch the DPDP Rules' own text to verify the 72-hour
+clock, and the SEBI FIRE-format circular's full text if any SEBI_CONTROLS
+row needs promoting.
 """
 
 from __future__ import annotations
 
 import datetime as dt
 
-RBI_FRAMEWORK_NAME = "RBI Cybersecurity and IT Governance Directions, 2026"
-RBI_VERSION = "2026"
-RBI_EFFECTIVE_DATE = dt.datetime(2026, 7, 31, tzinfo=dt.UTC)
-RBI_SOURCE_URL = "https://www.rbi.org.in/"  # generic RBI notifications index; the specific
-# Direction's own page did not resolve to a stable direct URL in this session (see module docstring)
+RBI_FRAMEWORK_NAME = (
+    "Reserve Bank of India (Non-Banking Financial Companies - Cybersecurity,"
+    " Technology: Risk, Resilience and Assurance Framework) Directions, 2026"
+)
+RBI_VERSION = "RBI/DoS/2026-27/461"
+RBI_EFFECTIVE_DATE = dt.datetime(2026, 7, 31, tzinfo=dt.UTC)  # para 2: "immediate effect"
+RBI_SOURCE_URL = "https://rbidocs.rbi.org.in/rdocs/notification/PDFs/461MD9FAF2CD7550844EE9A70C884DBE4A8A6.PDF"
 
 SEBI_FRAMEWORK_NAME = "SEBI Cybersecurity and Cyber Resilience Framework (CSCRF)"
 SEBI_VERSION = "2024 (as amended, incl. 24 Aug 2026 FIRE-format alignment circular)"
 SEBI_EFFECTIVE_DATE = dt.datetime(2024, 8, 20, tzinfo=dt.UTC)
 SEBI_SOURCE_URL = "https://www.sebi.gov.in/"
 
-# (control_id, short_title, source_ref) -- RBI 2026 Directions, paragraph-level.
-# Secondary sources used: taxguru.in, kpmg.com/in, ogma.in, bitscore.in
-# (see individual source_ref values), all accessed via WebSearch 2026-09-24.
-RBI_CONTROLS: list[tuple[str, str, str]] = [
+# (control_id, short_title, source_ref, verified) -- RBI 2026 Directions,
+# paragraph-level. Paragraph numbers below were confirmed by reading the
+# primary RBI/DoS/2026-27/461 PDF in full (supplied directly by the user
+# after rbidocs.rbi.org.in's normal CAPTCHA gate blocked automated fetch).
+RBI_CONTROLS: list[tuple[str, str, str, bool]] = [
     (
         "RBI-2026-DAKSH-6H",
-        "Report cyber incidents to RBI via the DAKSH platform within 6 hours of detection",
-        "https://www.bitscore.in/resources/rbi-cybersecurity-directions-2026",
+        "Report cyber incidents to RBI via the DAKSH platform within 6 hours of detection (paras 28, 141)",
+        RBI_SOURCE_URL,
+        True,
     ),
     (
         "RBI-2026-BOARD-GOV",
-        "Board-level cyber risk governance framework and oversight",
-        "https://rmaindia.org/rbi-cybersecurity-directions-2026-board-level-cyber-risk-governance-framework/",
+        "Board approves and annually reviews technology/cybersecurity strategy and policy (para 6, 68-69)",
+        RBI_SOURCE_URL,
+        True,
     ),
     (
         "RBI-2026-PRIV-ACCESS",
-        "Privileged access management for critical systems",
-        "https://sectona.com/blogs/technology/rbi-cybersecurity-compliance/",
+        "Two-factor/multi-factor authentication for privileged users of critical systems (para 115)",
+        RBI_SOURCE_URL,
+        True,
     ),
     (
         "RBI-2026-RESILIENCE",
-        "Cyber resilience, technology risk and assurance practices",
-        "https://kpmg.com/in/en/insights/2026/09/rbis-technology-focused-master-directions-issued-on-31-july-2026.html",
+        "BCP/DR capabilities aligned to RTO/near-zero RPO for critical information systems (paras 128, 134-135)",
+        RBI_SOURCE_URL,
+        True,
     ),
     (
         "RBI-2026-NBFC-SCOPE",
-        "Cybersecurity and technology risk directions applicability to NBFCs",
-        "https://taxguru.in/rbi/rbi-issues-nbfc-cybersecurity-technology-risk-directions-2026-governance-framework.html",
+        "Applies to all NBFCs registered under the RBI Act 1934, Factoring Regulation Act 2011, NHB Act 1987 (para 3)",
+        RBI_SOURCE_URL,
+        True,
     ),
 ]
 
-# (control_id, short_title, source_ref) -- SEBI CSCRF standards/annexures.
-SEBI_CONTROLS: list[tuple[str, str, str]] = [
+# (control_id, short_title, source_ref, verified) -- SEBI CSCRF standards/annexures.
+SEBI_CONTROLS: list[tuple[str, str, str, bool]] = [
     (
         "SEBI-CSCRF-6H-EMAIL",
         "Email cyber incident notification to SEBI-designated address within 6 hours",
-        "https://www.cybernx.com/sebi-cscrf-reporting-requirements/",
+        "https://www.sebi.gov.in/legal/circulars/aug-2024/cybersecurity-and-cyber-resilience-framework-cscrf-for-sebi-regulated-entities-res-_85964.html",
+        True,  # RS.CO.S1, confirmed from the primary CSCRF circular
     ),
     (
         "SEBI-CSCRF-24H-PORTAL",
         "File cyber incident report on SEBI's Incident Reporting Portal within 24 hours",
-        "https://www.corplawupdates.in/updates/sebi-cyber-incident-reporting-fire-format-2026",
+        "https://www.sebi.gov.in/legal/circulars/aug-2024/cybersecurity-and-cyber-resilience-framework-cscrf-for-sebi-regulated-entities-res-_85964.html",
+        True,  # RS.CO.S1, confirmed from the primary CSCRF circular
     ),
     (
         "SEBI-CSCRF-ANNEX-O",
         "Forensic audit report per Annexure-O clause 3.4",
         "https://www.cybernx.com/incident-response-under-sebi-cscrf-a-practical-guide-for-regulated-entities/",
+        False,
     ),
     (
         "SEBI-CSCRF-VAPT",
         "Incident-related VAPT and closure report",
         "https://veritect.ai/digital-data-ai-law/sebi-cscrf-compliance-playbook",
+        False,
     ),
 ]
 
@@ -128,8 +143,8 @@ REPORTING_OBLIGATIONS: list[tuple[str, float, str, str, list[str], dt.datetime |
         "detection",
         ["bank", "nbfc"],
         RBI_EFFECTIVE_DATE,
-        "https://www.bitscore.in/resources/rbi-cybersecurity-directions-2026",
-        False,  # RBI/DoS/2026-27/461 PDF is CAPTCHA-gated; paragraph unconfirmed
+        RBI_SOURCE_URL,  # paras 28, 141: "report cyber incidents on DAKSH platform... within six hours of detection"
+        True,
     ),
     (
         "cert_in",

@@ -23,22 +23,26 @@ def test_catalogue_import_creates_frameworks_and_obligations(engine_db):
 
     session = engine_db()
     frameworks = {f.name for f in session.query(m.Framework).all()}
-    assert "RBI Cybersecurity and IT Governance Directions, 2026" in frameworks
+    assert any("Non-Banking Financial Companies" in name for name in frameworks)
     assert "SEBI Cybersecurity and Cyber Resilience Framework (CSCRF)" in frameworks
 
-    # FrameworkControl rows (RBI/SEBI catalogue entries) remain unverified:
-    # only secondary sources were fetchable for their paragraph/standard
-    # numbers in this pass.
-    controls = session.query(m.FrameworkControl).all()
+    # FrameworkControl rows: RBI's paragraphs were confirmed against the
+    # primary RBI/DoS/2026-27/461 PDF (read in full in this session) and two
+    # of SEBI's against its primary CSCRF circular; the remaining
+    # SEBI_CONTROLS rows are still secondary-sourced and stay unverified
+    # (see rbi_sebi_data.py's module docstring).
+    controls = {c.control_id: c for c in session.query(m.FrameworkControl).all()}
     assert controls
-    assert all(c.verified is False for c in controls)
+    unverified_controls = {"SEBI-CSCRF-ANNEX-O", "SEBI-CSCRF-VAPT"}
+    for control_id, control in controls.items():
+        expected = control_id not in unverified_controls
+        assert control.verified is expected, control_id
 
-    # ReportingObligation rows are a mix: the SEBI CSCRF timelines and the
-    # standing CERT-In direction were confirmed against primary sources in
-    # a follow-up pass (see rbi_sebi_data.py's docstring); RBI's DAKSH
-    # paragraph and the DPDP breach clock remain unverified.
+    # ReportingObligation rows are a mix: the SEBI CSCRF timelines, RBI's
+    # DAKSH paragraph, and the standing CERT-In direction were all confirmed
+    # against primary sources; only the DPDP breach clock remains unverified.
     obligations = {o.regime: o for o in session.query(m.ReportingObligation).all()}
-    unverified_regimes = {"rbi_daksh", "dpdp_breach"}
+    unverified_regimes = {"dpdp_breach"}
     for regime, obligation in obligations.items():
         expected = regime not in unverified_regimes
         assert obligation.verified is expected, regime

@@ -121,15 +121,15 @@ else:
 
 st.subheader("Indian Regulatory Catalogues (PLAN.md Task 17)")
 st.caption(
-    "RBI's 2026 Cybersecurity Directions and SEBI's CSCRF, hand-built from paragraph/"
-    "standard IDs (never the regulator's full clause text, per CLAUDE.md's ISO/CIS "
-    "licensing rule extended here). Every control row below is honestly `verified=False`: "
-    "sourced from secondary commentary in this pass, not confirmed against rbi.org.in "
-    "or sebi.gov.in directly (see app/compliance/rbi_sebi_data.py's module docstring) "
-    "-- shown as a red ⚠️ badge rather than silently promoted for demo polish. The "
-    "incident-clock deadlines below are different: SEBI's and CERT-In's timelines were "
-    "confirmed against SEBI's primary CSCRF circular in a follow-up pass and are marked "
-    "verified; RBI's DAKSH paragraph and the DPDP clock are not."
+    "RBI's 2026 NBFC Cybersecurity Directions (RBI/DoS/2026-27/461) and SEBI's CSCRF, "
+    "hand-built from paragraph/standard IDs (never the regulator's full clause text, "
+    "per CLAUDE.md's ISO/CIS licensing rule extended here). Most rows below are now "
+    "`verified=True` against the primary text -- the RBI Directions PDF was read in "
+    "full and two SEBI rows against its primary CSCRF circular -- with a handful of "
+    "SEBI rows still secondary-sourced and shown with a red ⚠️ badge rather than "
+    "silently promoted (see app/compliance/rbi_sebi_data.py's module docstring). The "
+    "incident-clock deadlines below were confirmed the same way: SEBI's, CERT-In's, "
+    "and RBI's DAKSH timelines are all marked verified; only the DPDP clock is not."
 )
 with session_scope() as session:
     reg_frameworks = [

@@ -188,3 +188,58 @@ if org.scenario_results:
         st.caption(f"EAL at baseline: {format_inr(chosen.summary.eal)} (run {chosen.run_id[:8]}).")
 else:
     st.info("No active scenarios found.")
+
+st.subheader("Drill-down: Organization → Business Unit → Asset → Finding (PLAN.md Task 18)")
+st.caption(
+    "Live from the DB via nested expanders -- no fancy client-side tree widget, per "
+    "PLAN.md's cut line ('drop fancy drill-down navigation, use plain filtered tables "
+    "instead'), but real: expanding a node re-queries and shows exactly what's stored."
+)
+with session_scope() as session:
+    orgs = session.query(m.Organization).all()
+    bus = session.query(m.BusinessUnit).all()
+    drill_assets = session.query(m.Asset).all()
+    drill_findings = session.query(m.Finding).all()
+
+    bus_by_org: dict[str, list] = {}
+    for bu in bus:
+        bus_by_org.setdefault(bu.org_id, []).append(bu)
+    assets_by_bu: dict[str, list] = {}
+    for a in drill_assets:
+        assets_by_bu.setdefault(a.bu_id, []).append(a)
+    findings_by_asset: dict[str, list] = {}
+    for f in drill_findings:
+        findings_by_asset.setdefault(f.asset_id, []).append(f)
+
+    for org in orgs:
+        with st.expander(f"\U0001f3e2 {org.name} ({org.sector})"):
+            for bu in bus_by_org.get(org.id, []):
+                bu_assets = assets_by_bu.get(bu.id, [])
+                open_count = sum(
+                    1 for a in bu_assets for f in findings_by_asset.get(a.id, []) if f.status == "open"
+                )
+                with st.expander(f"\U0001f4c1 {bu.name} ({len(bu_assets)} assets, {open_count} open findings)"):
+                    for asset in bu_assets:
+                        asset_findings = findings_by_asset.get(asset.id, [])
+                        open_asset_findings = [f for f in asset_findings if f.status == "open"]
+                        with st.expander(
+                            f"\U0001f4bb {asset.hostname} ({asset.type}, criticality "
+                            f"{asset.criticality:.2f}) -- {len(open_asset_findings)} open"
+                        ):
+                            if asset_findings:
+                                st.dataframe(
+                                    [
+                                        {
+                                            "finding_type": f.finding_type,
+                                            "cve_id": f.cve_id,
+                                            "rule_id": f.rule_id,
+                                            "severity_weight": f.severity_weight,
+                                            "status": f.status,
+                                        }
+                                        for f in asset_findings
+                                    ],
+                                    hide_index=True,
+                                    width="stretch",
+                                )
+                            else:
+                                st.caption("No findings on this asset.")

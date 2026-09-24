@@ -10,10 +10,12 @@ import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
 
+from app.compliance.risk_link import compliance_risk_eal
 from app.config import settings
 from app.data import models as m
 from app.data.db import session_scope
 from app.engine.contracts import attribute, run_org
+from app.engine.trend import org_eal_trend
 from dashboard.format_utils import format_inr
 from dashboard.theme import CATEGORICAL, INK_SECONDARY, apply_layout, inject_page_css
 
@@ -173,6 +175,62 @@ if attribution_rows:
         st.dataframe(contrib_df[["Asset", "EAL share (formatted)"]], hide_index=True, width="stretch")
 else:
     st.info("No attribution rows yet.")
+
+st.subheader("EAL Trend (PLAN.md Task 18)")
+st.caption(
+    "Every stored org-level run at this session's seed, in the order it was computed -- "
+    "a real accumulation of runs over time, not a fabricated 12-week series (PLAN.md's "
+    "cut line for Task 19's fuller history). Filtered to ONE seed so a step here reflects "
+    "a real DB change (a new finding, a coverage change, a fresh `make fetch-vuln-intel`), "
+    "never Monte Carlo re-roll noise (R3 guardrail: 'no seed-per-refresh noise')."
+)
+trend_rows = org_eal_trend(seed=settings.default_seed)
+if len(trend_rows) >= 2:
+    trend_df = pd.DataFrame(trend_rows)
+    trend_fig = go.Figure(
+        go.Scatter(
+            x=trend_df["snapshot_at"],
+            y=trend_df["eal"],
+            mode="lines+markers",
+            line_color=CATEGORICAL["blue"],
+            hovertemplate="%{x|%Y-%m-%d %H:%M}<br>EAL: %{y:,.0f}<extra></extra>",
+        )
+    )
+    trend_fig.update_layout(xaxis_title="Run snapshot time", yaxis_title="EAL (INR)")
+    apply_layout(trend_fig, height=240)
+    st.plotly_chart(trend_fig, width="stretch")
+else:
+    st.info(
+        f"Only {len(trend_rows)} stored run(s) at seed={settings.default_seed} so far -- "
+        "a trend needs at least 2. Reload this page after a DB change (new findings, "
+        "control coverage, or a `make fetch-vuln-intel` refresh) to accumulate more."
+    )
+
+st.subheader("Risk-to-Compliance ₹ Link (PLAN.md Task 18)")
+st.caption(
+    "EAL attributable to each unmet (gap/partial) NIST CSF control, allocated by the "
+    "same weighted-share method `attribute()` uses for assets: a control's share of "
+    "open-finding severity / uncovered-control-type weight, of the total across all "
+    "unmet mapped controls, times this run's EAL. Rows sum to exactly this run's EAL "
+    "across the controls they cover -- never invented, always traceable to run "
+    f"{org.run_id[:8]}."
+)
+risk_link_rows = compliance_risk_eal(org.run_id)
+if risk_link_rows:
+    link_df = pd.DataFrame(risk_link_rows)
+    link_df["EAL at risk"] = link_df["eal_at_risk_inr"].apply(format_inr)
+    st.dataframe(
+        link_df[["control_id", "short_title", "status", "EAL at risk"]].rename(
+            columns={"control_id": "Control ID", "short_title": "Short title", "status": "Status"}
+        ),
+        hide_index=True,
+        width="stretch",
+    )
+else:
+    st.info(
+        "No gap/partial controls with a mapped, nonzero weight yet -- run the Compliance "
+        "page first so ComplianceStatus rows exist, or check `make seed`'s starter mapping."
+    )
 
 st.caption(
     "Company data is synthetic. The Monte Carlo math, vulnerability intelligence, "

@@ -93,8 +93,19 @@ Compliance page rather than silently promoted. The Compliance page's new
 "Incident-Clock Calculator" turns one detection timestamp + entity type
 into every applicable deadline, live from the DB.
 
-Still open: Task 18 (risk-to-compliance ₹ link, trend chart, drill-down)
-and demo hardening (Task 21) are next.
+Task 18 is also done: risk-to-compliance ₹ link (`app/compliance/risk_link.py`
+allocates a run's EAL across every unmet NIST CSF control by open-finding/
+uncovered-control-type weight — rows sum to exactly that run's EAL), an
+EAL trend chart on the Executive page over stored `SimulationRun` rows at a
+single fixed seed (R3 guardrail: no seed-per-refresh noise), and a plain
+org → business unit → asset → finding drill-down on the Technical page via
+nested expanders (PLAN.md's cut line: no fancy tree widget, real DB
+queries).
+
+All of PLAN.md's L2 tasks 14, 15, 17, 18 are now done; Task 16 (Gemini
+tool-calling) is also done (a `GEMINI_API_KEY` is configured in this
+environment). Only the stretch tasks (19–20) and demo hardening (Task 21)
+remain.
 
 See `PLAN.md` for the full task-by-task order, the cut line, and the
 proposed assumption values (multiplier bounds, tail cap, control efficacy

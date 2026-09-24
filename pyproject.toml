@@ -35,3 +35,9 @@ testpaths = ["tests"]
 [tool.ruff]
 line-length = 100
 target-version = "py311"
+
+[tool.ruff.lint.per-file-ignores]
+# Streamlit's multipage convention requires exact filenames (Home.py,
+# 1_Executive.py, ...) for sidebar ordering and page titles; not negotiable.
+"dashboard/Home.py" = ["N999"]
+"dashboard/pages/*.py" = ["N999"]

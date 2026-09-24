@@ -14,11 +14,25 @@ from app.compliance.incident_clock import compute_incident_clocks
 from app.compliance.status import compliance_status
 from app.data import models as m
 from app.data.db import session_scope
-from dashboard.theme import STATUS, apply_layout, inject_page_css, status_badge_html
+from dashboard.theme import (
+    STATUS,
+    apply_layout,
+    inject_page_css,
+    page_header,
+    section_header,
+    sidebar_brand,
+    status_badge_html,
+)
 
 st.set_page_config(page_title="Compliance | StochastiQ", layout="wide", page_icon="\U0001f6e1️")
 st.markdown(inject_page_css(), unsafe_allow_html=True)
-st.title("Compliance and Framework Mapping")
+sidebar_brand()
+page_header(
+    "Compliance and Framework Mapping",
+    "NIST CSF 2.0 status, Indian regulatory catalogues, the incident-clock calculator, and \u20b9-at-risk per control.",
+    icon="\u2705",
+    eyebrow="Compliance",
+)
 
 with session_scope() as session:
     frameworks = session.query(m.Framework).all()
@@ -49,7 +63,7 @@ _STATUS_ORDER = ["gap", "partial", "met", "unknown"]
 status_rank = {s: i for i, s in enumerate(_STATUS_ORDER)}
 df["status_rank"] = df["status"].map(status_rank)
 
-st.subheader("Heatmap by Function")
+section_header("Heatmap by Function", icon="\U0001f5fa\ufe0f")
 st.caption(
     "Status colors are reserved and never reused for anything else on this page "
     "(critical = gap, warning = partial, good = met, muted = unknown)."
@@ -76,7 +90,7 @@ heat_fig.update_layout(barmode="stack", xaxis_title="Subcategories", yaxis={"aut
 apply_layout(heat_fig, height=280, show_legend=True)
 st.plotly_chart(heat_fig, width="stretch")
 
-st.subheader("Status by Subcategory")
+section_header("Status by Subcategory", icon="\U0001f4cb")
 df["status_badge"] = df["status"].apply(status_badge_html)
 display_df = df[["control_id", "short_title", "function", "status_badge"]].sort_values(
     ["function", "control_id"]
@@ -93,7 +107,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-st.subheader("Findings and their framework references")
+section_header("Findings and their framework references", icon="\U0001f9e9")
 with session_scope() as session:
     findings = session.query(m.Finding).filter(m.Finding.rule_id.isnot(None)).all()
     mappings = session.query(m.ControlMapping).filter_by(from_kind="finding_rule").all()
@@ -119,7 +133,7 @@ if findings:
 else:
     st.info("No findings yet.")
 
-st.subheader("Indian Regulatory Catalogues (PLAN.md Task 17)")
+section_header("Indian Regulatory Catalogues", icon="\U0001f1ee\U0001f1f3")
 st.caption(
     "RBI's 2026 NBFC Cybersecurity Directions (RBI/DoS/2026-27/461) and SEBI's CSCRF, "
     "hand-built from paragraph/standard IDs (never the regulator's full clause text, "
@@ -164,7 +178,7 @@ if reg_frameworks:
 else:
     st.info("RBI/SEBI catalogues not imported yet. Run `make seed`.")
 
-st.subheader("Incident-Clock Calculator")
+section_header("Incident-Clock Calculator", icon="\u23f1\ufe0f")
 st.caption(
     "Enter one detection timestamp; every applicable regulatory reporting deadline is "
     "computed from that single timestamp plus the ReportingObligation rows in the DB "

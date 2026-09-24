@@ -13,12 +13,18 @@ from app.data import models as m
 from app.data.db import session_scope
 from app.engine.contracts import apply_controls, run_scenario
 from dashboard.format_utils import format_inr
-from dashboard.theme import inject_page_css
+from dashboard.theme import inject_page_css, page_header, sidebar_brand
 from dashboard.whatif_logic import build_overrides, paired_delta_eal_ci, paired_stats
 
 st.set_page_config(page_title="What-if | StochastiQ", layout="wide", page_icon="\U0001f6e1️")
 st.markdown(inject_page_css(), unsafe_allow_html=True)
-st.title("What-if: Control Scenario Simulation")
+sidebar_brand()
+page_header(
+    "What-if: Control Scenario Simulation",
+    "Slide control coverage and efficacy, then re-simulate with the same random draws to see \u0394EAL.",
+    icon="\U0001f39b\ufe0f",
+    eyebrow="What-if",
+)
 
 with session_scope() as session:
     scenarios = session.query(m.ThreatScenario).filter_by(active=True).all()

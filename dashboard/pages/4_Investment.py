@@ -16,11 +16,25 @@ from app.data import models as m
 from app.data.db import session_scope
 from app.optimize.optimizer import GORDON_LOEB_FRACTION, budget_sweep, evaluate_options, optimize
 from dashboard.format_utils import format_inr
-from dashboard.theme import CATEGORICAL, STATUS, apply_layout, inject_page_css
+from dashboard.theme import (
+    CATEGORICAL,
+    STATUS,
+    apply_layout,
+    inject_page_css,
+    page_header,
+    section_header,
+    sidebar_brand,
+)
 
 st.set_page_config(page_title="Investment | StochastiQ", layout="wide", page_icon="\U0001f6e1️")
 st.markdown(inject_page_css(), unsafe_allow_html=True)
-st.title("Investment Optimization")
+sidebar_brand()
+page_header(
+    "Investment Optimization",
+    "ROSI per control, a 0/1 knapsack under a \u20b9 budget, and the joint re-simulated result.",
+    icon="\U0001f4b0",
+    eyebrow="Investment",
+)
 
 with session_scope() as session:
     options = session.query(m.ControlOption).all()
@@ -40,7 +54,7 @@ def _cached_evaluate_options(seed: int, n_iter: int):
 
 baseline_eal, evaluations = _cached_evaluate_options(seed, n_iter)
 
-st.subheader("Standalone ROSI per control option")
+section_header("Standalone ROSI per control option", icon="\U0001f4c8")
 st.caption(
     "Each row uses the SAME random draws as the baseline (apply_controls' common "
     "random numbers), so a zero-effect option always shows delta-EAL = 0 exactly."
@@ -64,7 +78,7 @@ eval_df = pd.DataFrame(
 )
 st.markdown(eval_df.to_html(escape=False, index=False), unsafe_allow_html=True)
 
-st.subheader("Choose a set under a budget")
+section_header("Choose a set under a budget", icon="\U0001f9ee")
 max_cost = sum(ev.annual_cost for ev in evaluations) or 1.0
 _LAKH = 1_00_000
 max_cost_lakh = max_cost / _LAKH
@@ -120,7 +134,7 @@ if plan.selected:
 else:
     st.info("No controls fit within this budget.")
 
-st.subheader("Investment vs. Risk Reduction curve")
+section_header("Investment vs. Risk Reduction curve", icon="\U0001f4c9")
 
 
 @st.cache_data(ttl=300, show_spinner="Sweeping the budget curve...")

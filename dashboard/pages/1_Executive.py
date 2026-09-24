@@ -17,11 +17,25 @@ from app.data.db import session_scope
 from app.engine.contracts import attribute, run_org
 from app.engine.trend import org_eal_trend
 from dashboard.format_utils import format_inr
-from dashboard.theme import CATEGORICAL, INK_SECONDARY, apply_layout, inject_page_css
+from dashboard.theme import (
+    CATEGORICAL,
+    INK_SECONDARY,
+    apply_layout,
+    inject_page_css,
+    page_header,
+    section_header,
+    sidebar_brand,
+)
 
 st.set_page_config(page_title="Executive | StochastiQ", layout="wide", page_icon="\U0001f6e1️")
 st.markdown(inject_page_css(), unsafe_allow_html=True)
-st.title("Executive Risk View")
+sidebar_brand()
+page_header(
+    "Executive Risk View",
+    "Expected Annual Loss, Value-at-Risk, the loss exceedance curve, and where risk concentrates.",
+    icon="\U0001f3af",
+    eyebrow="Executive",
+)
 
 
 @st.cache_data(ttl=300, show_spinner="Running the risk engine...")
@@ -54,11 +68,23 @@ if org_row is None:
 org, attribution_rows = _load_org_run(settings.default_seed, settings.default_n_iter)
 
 col1, col2, col3, col4 = st.columns(4)
-col1.metric("Expected Annual Loss (EAL)", format_inr(org.summary.eal))
-col2.metric("VaR95 (95th percentile annual loss)", format_inr(org.summary.var95))
-col3.metric("VaR99 (99th percentile annual loss)", format_inr(org.summary.var99))
+col1.metric("Expected Annual Loss", format_inr(org.summary.eal), help="EAL: mean of the simulated annual loss distribution.")
+col2.metric(
+    "VaR95 (annual)",
+    format_inr(org.summary.var95),
+    help="95th percentile of simulated annual loss -- not a regulatory VaR.",
+)
+col3.metric(
+    "VaR99 (annual)",
+    format_inr(org.summary.var99),
+    help="99th percentile of simulated annual loss -- not a regulatory VaR.",
+)
 score = _enterprise_risk_score(org.summary.eal, org_revenue_inr)
-col4.metric("Enterprise Risk Score (0-100, illustrative)", f"{score:.0f}")
+col4.metric(
+    "Enterprise Risk Score",
+    f"{score:.0f} / 100",
+    help="Illustrative: EAL as a share of revenue, capped at 100 once EAL reaches 5% of revenue.",
+)
 
 st.caption(
     f"Run ID: `{org.run_id}` · seed={org.seed} · n_iter={org.n_iter} · "
@@ -66,7 +92,7 @@ st.caption(
     "VaR is a percentile of simulated annual loss, not a regulatory VaR (build-spec.md section 1.4)."
 )
 
-st.subheader("Loss Exceedance Curve")
+section_header("Loss Exceedance Curve", icon="\U0001f4c9")
 lec_df = pd.DataFrame(org.summary.lec_points, columns=["loss", "exceedance_probability"])
 fig = go.Figure()
 fig.add_trace(
@@ -92,7 +118,7 @@ st.caption(
     "which a linear axis flattens into an invisible sliver near zero."
 )
 
-st.subheader("Top 5 Scenarios by EAL")
+section_header("Top 5 Scenarios by EAL", icon="\U0001f3c6")
 scenario_names = {}
 with session_scope() as _session:
     for sid in org.scenario_results:
@@ -144,7 +170,7 @@ with table_col:
         width="stretch",
     )
 
-st.subheader("Top Risk Contributors (assets)")
+section_header("Top Risk Contributors (assets)", icon="\U0001f5a5\ufe0f")
 if attribution_rows:
     with session_scope() as _session:
         asset_names = {a.id: a.hostname for a in _session.query(m.Asset).all()}
@@ -176,7 +202,7 @@ if attribution_rows:
 else:
     st.info("No attribution rows yet.")
 
-st.subheader("EAL Trend (PLAN.md Task 18)")
+section_header("EAL Trend", icon="\U0001f4c8")
 st.caption(
     "Every stored org-level run at this session's seed, in the order it was computed -- "
     "a real accumulation of runs over time, not a fabricated 12-week series (PLAN.md's "
@@ -206,7 +232,7 @@ else:
         "control coverage, or a `make fetch-vuln-intel` refresh) to accumulate more."
     )
 
-st.subheader("Risk-to-Compliance ₹ Link (PLAN.md Task 18)")
+section_header("Risk-to-Compliance ₹ Link", icon="\U0001f517")
 st.caption(
     "EAL attributable to each unmet (gap/partial) NIST CSF control, allocated by the "
     "same weighted-share method `attribute()` uses for assets: a control's share of "

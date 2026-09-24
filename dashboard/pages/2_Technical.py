@@ -16,11 +16,26 @@ from app.data.db import session_scope
 from app.engine.contracts import run_org
 from app.optimize.recommendations import top_finding_recommendations
 from dashboard.format_utils import format_inr
-from dashboard.theme import CATEGORICAL, INK_SECONDARY, STATUS, apply_layout, inject_page_css
+from dashboard.theme import (
+    CATEGORICAL,
+    INK_SECONDARY,
+    STATUS,
+    apply_layout,
+    inject_page_css,
+    page_header,
+    section_header,
+    sidebar_brand,
+)
 
 st.set_page_config(page_title="Technical | StochastiQ", layout="wide", page_icon="\U0001f6e1️")
 st.markdown(inject_page_css(), unsafe_allow_html=True)
-st.title("Technical View")
+sidebar_brand()
+page_header(
+    "Technical View",
+    "Asset and finding inventory, remediation backlog, and scenario sensitivity.",
+    icon="\U0001f527",
+    eyebrow="Technical",
+)
 
 
 @st.cache_data(ttl=300, show_spinner="Running the risk engine...")
@@ -57,7 +72,7 @@ with session_scope() as session:
         for f in findings
     ]
 
-st.subheader("Asset Inventory")
+section_header("Asset Inventory", icon="\U0001f5c3\ufe0f")
 if asset_rows:
     asset_df = pd.DataFrame(asset_rows)
     env_filter = st.multiselect("Environment", sorted(asset_df["environment"].unique()), default=list(asset_df["environment"].unique()))
@@ -70,7 +85,7 @@ if asset_rows:
 else:
     st.info("No assets found. Run `make seed` to populate the database.")
 
-st.subheader("Remediation Backlog (open findings, by age)")
+section_header("Remediation Backlog (open findings, by age)", icon="\u23f3")
 if finding_rows:
     finding_df = pd.DataFrame(finding_rows)
     open_df = finding_df[finding_df["status"] == "open"].sort_values("age_days", ascending=False)
@@ -81,7 +96,7 @@ else:
         "land in PLAN.md Tasks 8-9. This table will populate once findings exist."
     )
 
-st.subheader("Top Remediation Actions")
+section_header("Top Remediation Actions", icon="\u2728")
 st.caption(
     "Ranked by severity weight x asset criticality, with real CISA KEV-listed CVEs "
     "weighted higher ('KEV-first patching', build-spec.md section 3.3). Run "
@@ -109,7 +124,7 @@ if recommendations:
 else:
     st.info("No open findings to recommend against.")
 
-st.subheader("Scenario Sensitivity & Stability (PLAN.md Task 15)")
+section_header("Scenario Sensitivity & Stability", icon="\U0001f30a")
 st.caption(
     "Telemetry-driven ExposureMult: the Vuln factor is scaled by the current open-finding "
     "population (KEV-listed and high-EPSS CVEs weigh more), clipped to "
@@ -189,7 +204,7 @@ if org.scenario_results:
 else:
     st.info("No active scenarios found.")
 
-st.subheader("Drill-down: Organization → Business Unit → Asset → Finding (PLAN.md Task 18)")
+section_header("Drill-down: Organization → Business Unit → Asset → Finding", icon="\U0001f50e")
 st.caption(
     "Live from the DB via nested expanders -- no fancy client-side tree widget, per "
     "PLAN.md's cut line ('drop fancy drill-down navigation, use plain filtered tables "

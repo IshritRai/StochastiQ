@@ -23,7 +23,7 @@ from __future__ import annotations
 import json
 import os
 
-_MODEL = "gemini-2.0-flash"
+_MODEL = "gemini-3.6-flash"
 
 # Cached client + a "don't retry" flag so a missing/invalid key or a broken
 # import doesn't re-attempt client construction on every single question.

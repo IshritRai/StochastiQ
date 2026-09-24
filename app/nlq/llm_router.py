@@ -47,9 +47,10 @@ def _numeric_tokens(text: str) -> set[str]:
 
 def _figure_numeric_tokens(figures: dict) -> set[str]:
     """Numbers a structured result actually carries, in several plausible
-    renderings (raw float, rounded integer, comma-grouped) so formatting
-    differences between the code path and Gemini's prose don't cause a
-    false positive on the R5 check."""
+    renderings (raw float, rounded integer, comma-grouped, and Indian
+    lakh/crore scale -- this app's own INR convention, dashboard.
+    format_utils.format_inr) so formatting differences between the code
+    path and Gemini's prose don't cause a false positive on the R5 check."""
     tokens: set[str] = set()
     for value in figures.values():
         if isinstance(value, bool):
@@ -60,6 +61,14 @@ def _figure_numeric_tokens(figures: dict) -> set[str]:
             tokens |= _numeric_tokens(str(round(value)))
             tokens |= _numeric_tokens(f"{round(value):,}")
             tokens |= _numeric_tokens(str(value))
+            # Lakh/crore renderings (e.g. 4536250.30 -> "45.36" lakh,
+            # "0.45" crore) at 1-2 decimal places, matching how Gemini
+            # tends to phrase INR amounts given a lakh/crore-formatted
+            # baseline in its prompt.
+            for scale in (1_00_000, 1_00_00_000):
+                scaled = value / scale
+                for decimals in (0, 1, 2):
+                    tokens |= _numeric_tokens(f"{scaled:.{decimals}f}")
         else:
             tokens |= _numeric_tokens(str(value))
     return tokens

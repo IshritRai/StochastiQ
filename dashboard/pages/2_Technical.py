@@ -71,11 +71,11 @@ else:
 
 st.subheader("Top Remediation Actions")
 st.caption(
-    "Ranked by severity weight x asset criticality, with CISA KEV-listed CVEs weighted "
-    "higher ('KEV-first patching', build-spec.md section 3.3). Real KEV/EPSS data isn't "
-    "loaded yet (PLAN.md Task 8 needs network access this environment currently blocks), "
-    "so this is a proxy ranking, not a simulated ΔEAL -- labeled as such rather than "
-    "presented as more precise than it is."
+    "Ranked by severity weight x asset criticality, with real CISA KEV-listed CVEs "
+    "weighted higher ('KEV-first patching', build-spec.md section 3.3). Run "
+    "`make fetch-vuln-intel` to pull the current KEV catalog and EPSS scores "
+    "(PLAN.md Task 8) -- this is a proxy risk score, not a simulated ΔEAL, "
+    "labeled as such rather than presented as more precise than it is."
 )
 recommendations = top_finding_recommendations(limit=10)
 if recommendations:

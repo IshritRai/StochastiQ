@@ -29,26 +29,33 @@ CIS, RBI, SEBI) are real.**
 python -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
 
-make seed          # builds the synthetic demo company (idempotent: same seed, same data)
-make test          # runs the guardrail + seed test suite
-make run-api        # FastAPI on :8000
-make run-dashboard   # Streamlit on :8501
+make seed             # builds the synthetic demo company (idempotent: same seed, same data)
+make fetch-vuln-intel  # pulls the live CISA KEV catalog + FIRST EPSS scores (real, not synthetic)
+make test             # runs the guardrail + seed test suite
+make run-api           # FastAPI on :8000
+make run-dashboard      # Streamlit on :8501
 ```
 
 Or via Docker: `docker compose up` (Postgres + API + dashboard).
 
 ## Current status
 
-`PLAN.md` Tasks 0–5 are done: repo scaffold, full database schema, a
-hand-written synthetic seed dataset (with controls linked to the scenarios
-they affect), the real Monte Carlo engine (`simulate`/`summarize`/
-`run_scenario`/`run_org`/`attribute`/`apply_controls`), and a 5-page
-Streamlit dashboard (Executive, Technical, What-if, Investment, Compliance)
-reading live from the database. `make seed && make test` passes; `make
-run-dashboard` shows real EAL/VaR/loss-exceedance figures for the synthetic
-demo company. The Investment and Compliance pages are intentionally
-placeholders until their backing engine work (Tasks 6 and 11) lands — they
-show no fabricated numbers in the meantime.
+`PLAN.md` Tasks 0–12 are done: repo scaffold, full database schema, the
+synthetic seed generator, the real Monte Carlo engine (`simulate`/
+`summarize`/`run_scenario`/`run_org`/`attribute`/`apply_controls`), a
+5-page live Streamlit dashboard, the full NIST CSF 2.0 catalog (all 106
+subcategories, from NIST's own public-domain OSCAL data) with a starter
+compliance mapping, a CSV importer, real CISA KEV + FIRST EPSS ingestion
+(`make fetch-vuln-intel` — live data, not synthetic), the investment
+optimizer (ROSI, knapsack, joint re-simulation), KEV-first remediation
+recommendations, and a 9-intent natural-language query router.
+`make seed && make fetch-vuln-intel && make test` passes end to end.
+
+Still open: Task 16's Gemini tool-calling upgrade to the NL layer needs a
+`GEMINI_API_KEY` in the environment (not yet set here — the current NL
+router works without it, since it's a keyword router, not an LLM); the L2
+sweep (Tasks 14–18: telemetry-driven exposure, RBI/SEBI catalogues,
+incident clocks) and demo hardening (Task 21) are next.
 
 See `PLAN.md` for the full task-by-task order, the cut line, and the
 proposed assumption values (multiplier bounds, tail cap, control efficacy

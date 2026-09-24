@@ -25,11 +25,10 @@ if not frameworks:
     st.stop()
 
 st.caption(
-    "NIST CSF 2.0 Functions/Categories are corroborated against published sources; "
-    "the Subcategory list here is a starter subset with paraphrased short titles, "
-    "not yet verified against the live NIST CPRT tool (this environment's network "
-    "policy currently blocks csrc.nist.gov -- see PLAN.md section 8). "
-    "The finding-to-control mapping is a starter, unvalidated by an assessor."
+    "All 6 Functions, 22 Categories and 106 Subcategories are NIST's own official "
+    "CSF 2.0 OSCAL catalog (public domain), not a hand-typed subset. The "
+    "finding-to-control mapping is still a starter, unvalidated by an assessor "
+    "(build-spec.md risk R6)."
 )
 
 rows = compliance_status(framework="NIST CSF", scope="org")

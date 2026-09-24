@@ -1,10 +1,9 @@
 """Home / landing page. Page chrome (set_page_config, CSS, sidebar brand)
 lives in the dashboard/Home.py navigation shell, which runs once per
-interaction before this page's body -- this file is the `st.navigation`
-page for the "Home" entry only (PLAN.md Task 5 / sidebar redesign).
+interaction before this page's body; this file is the `st.navigation`
+page for the "Home" entry only.
 
-Every figure must trace to a SIMULATION_RUN id -- no hard-coded numbers
-here (CLAUDE.md rule 1).
+Every figure must trace to a SIMULATION_RUN id. No hard-coded numbers here.
 """
 
 from __future__ import annotations
@@ -27,7 +26,7 @@ if not has_data:
     page_header(
         "StochastiQ",
         "AI-powered continuous cyber risk quantification and investment optimization platform.",
-        eyebrow="SIH PS 26105",
+        eyebrow="Cyber Risk Platform",
     )
     st.info("Run `make seed` to populate the database, then reload this page.")
     st.stop()
@@ -38,7 +37,7 @@ page_header(
     f"for {org_row.name}. "
     "Company data is synthetic; the Monte Carlo math, vulnerability intelligence, "
     "and framework catalogues are real.",
-    eyebrow="SIH PS 26105",
+    eyebrow="Cyber Risk Platform",
 )
 
 with st.container(border=True):

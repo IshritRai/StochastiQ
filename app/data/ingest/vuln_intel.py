@@ -1,16 +1,15 @@
-"""Real vulnerability intelligence: CISA KEV + FIRST EPSS (build-spec.md
-section 3.1, L1). Live, real data attached to the synthetic software
-inventory, so KEV flags and EPSS values are genuine (CLAUDE.md: "Synthetic
-inputs, real mechanics; label which is which").
+"""Real vulnerability intelligence: CISA KEV + FIRST EPSS (L1). Live, real
+data attached to the synthetic software inventory, so KEV flags and EPSS
+values are genuine (synthetic inputs, real mechanics, labeled which is
+which).
 
 Deliberately NOT called from `make seed` / app.data.seed.seed.seed():
-that function's reproducibility guarantee ("same seed, same data",
-PLAN.md Task 1's done-when) is about the SYNTHETIC company, and a live feed
-changes daily by definition -- baking it into `seed()` would make
-`make seed` non-reproducible. Instead this is its own step
-(`make fetch-vuln-intel`), logged as its own INGEST_RUN with its own
-timestamp, exactly like the CSV importer (build-spec.md: "provenance on
-every number: source, timestamp, run ID").
+that function's reproducibility guarantee ("same seed, same data") is
+about the SYNTHETIC company, and a live feed changes daily by definition:
+baking it into `seed()` would make `make seed` non-reproducible. Instead
+this is its own step (`make fetch-vuln-intel`), logged as its own
+INGEST_RUN with its own timestamp, exactly like the CSV importer
+(provenance on every number: source, timestamp, run ID).
 """
 
 from __future__ import annotations
@@ -36,10 +35,10 @@ EPSS_FIXTURE_PATH = FIXTURES_DIR / "epss_snapshot.json"
 
 def fetch_kev(timeout: float = 30.0) -> tuple[dict, str]:
     """Downloads the live CISA KEV catalog. Falls back to the frozen
-    fixture (PLAN.md Task 21: demo hardening -- 'offline fallback if
-    KEV/EPSS/Gemini unreachable') on any network failure so `docker compose
-    up` reproduces the demo with no internet. Returns (catalog, source)
-    where source is "live" or "offline_fixture"."""
+    fixture (demo hardening: offline fallback if KEV/EPSS/Gemini
+    unreachable) on any network failure so `docker compose up` reproduces
+    the demo with no internet. Returns (catalog, source) where source is
+    "live" or "offline_fixture"."""
     try:
         response = requests.get(KEV_URL, timeout=timeout)
         response.raise_for_status()

@@ -1,12 +1,10 @@
 """`make seed`: builds the synthetic company from seed_config.py and one RNG seed.
 
-Done-when (build-spec.md section 3.1 / PLAN.md Task 1):
-    running this twice with the same seed gives identical data.
+Done-when: running this twice with the same seed gives identical data.
 
 The hidden per-BU maturity variable stays local to this script and is never
-written to the database or returned to callers (build-spec.md section 3.1:
-"The maturity variable stays in the generator only and never enters the
-database or the model").
+written to the database or returned to callers ("The maturity variable
+stays in the generator only and never enters the database or the model").
 """
 
 from __future__ import annotations
@@ -117,7 +115,7 @@ def _make_control_types(session) -> dict[str, m.ControlType]:
             efficacy_low=lo,
             efficacy_mode=mode,
             efficacy_high=hi,
-            prior_source="PLAN.md section 7 (no verified public efficacy source found; assumption)",
+            prior_source="No verified public efficacy source found; assumption",
             is_assumption=True,
         )
         session.add(ct)
@@ -222,10 +220,10 @@ def _make_sample_findings(session, assets: list[m.Asset], rng: np.random.Generat
     page. Roughly a third are pre-remediated so both statuses appear.
 
     `first_seen` is backdated (assumption: uniform 1-180 days ago) rather than
-    left at the seed's own run time -- an "ageing" remediation backlog
+    left at the seed's own run time: an "ageing" remediation backlog
     (dashboard's Technical page) is meaningless if every finding was
-    discovered "now" (CLAUDE.md: no invented realism, but no invented
-    freshness either)."""
+    discovered "now" (no invented realism, but no invented freshness
+    either)."""
     if not assets:
         return
     now = dt.datetime.now(dt.UTC)
@@ -278,7 +276,7 @@ def seed(reset: bool = True) -> None:
 
         bus = _make_business_units(session, org)
 
-        # Hidden maturity: generator-local only, never persisted (build-spec.md section 3.1).
+        # Hidden maturity: generator-local only, never persisted.
         maturity = {
             bu.id: float(rng.beta(cfg.MATURITY_BETA_A, cfg.MATURITY_BETA_B)) for bu in bus
         }

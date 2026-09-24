@@ -1,6 +1,5 @@
-"""Intent router: 9 intents, each mapped to a real function
-(build-spec.md section 3.3, L1). Unsupported questions get an honest
-"I can't answer that yet" rather than a guess (build-spec.md risk R5).
+"""Intent router: 9 intents, each mapped to a real function. Unsupported
+questions get an honest "I can't answer that yet" rather than a guess.
 """
 
 from __future__ import annotations
@@ -145,18 +144,17 @@ def _handle_delay_impact(question: str) -> Answer:
     match = _DAYS_PATTERN.search(question)
     n_days = int(match.group(1)) if match else 30
 
-    # Exposure-days model (documented L1 assumption, build-spec.md section 3.3):
-    # delaying remediation for a fraction of the year raises the exposure index
-    # proportionally to that fraction. Not a simulated finding-level effect --
-    # a bounded, labeled approximation until Task 15's telemetry-driven
-    # ExposureMult replaces it.
+    # Exposure-days model (documented L1 assumption): delaying remediation
+    # for a fraction of the year raises the exposure index proportionally
+    # to that fraction. Not a simulated finding-level effect, but a bounded,
+    # labeled approximation until a telemetry-driven ExposureMult replaces it.
     exposure_mult = 1.0 + (n_days / 365.0)
     baseline = run_org(overrides={"n_iter": _N_ITER}, seed=_SEED)
     delayed = run_org(overrides={"n_iter": _N_ITER, "exposure_mult": exposure_mult}, seed=_SEED)
     delta = delayed.summary.eal - baseline.summary.eal
     return Answer(
-        text=f"Delaying remediation by {n_days} days is modeled (exposure-days assumption, "
-        f"see build-spec.md section 3.3) as raising Expected Annual Loss by {_fmt(delta)}, "
+        text=f"Delaying remediation by {n_days} days is modeled (exposure-days assumption) "
+        f"as raising Expected Annual Loss by {_fmt(delta)}, "
         f"from {_fmt(baseline.summary.eal)} to {_fmt(delayed.summary.eal)}.",
         figures={"baseline_eal": baseline.summary.eal, "delayed_eal": delayed.summary.eal, "delta_eal": delta, "days": n_days},
         provenance={"baseline_run_id": baseline.run_id, "delayed_run_id": delayed.run_id, "source": "run_org"},
@@ -254,11 +252,11 @@ _INTENTS: list[tuple[re.Pattern, callable]] = [
 ]
 
 
-# Task 16 allow-list: every intent name Gemini is permitted to pick from,
-# mapped to the exact same handler functions the rule-based router above
-# uses. This is intentionally the ONLY way app/nlq/llm_router.py can reach
-# code -- Gemini selects a name from this fixed dict, never a function, a
-# DB query, or arbitrary code (build-spec.md risk R5).
+# Allow-list: every intent name Gemini is permitted to pick from, mapped
+# to the exact same handler functions the rule-based router above uses.
+# This is intentionally the ONLY way app/nlq/llm_router.py can reach code:
+# Gemini selects a name from this fixed dict, never a function, a DB
+# query, or arbitrary code.
 ALLOWED_INTENTS: dict[str, callable] = {
     "org_eal": _handle_org_eal,
     "top_scenarios": _handle_top_scenarios,

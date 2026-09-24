@@ -1,7 +1,6 @@
-"""Executive dashboard (build-spec.md section 3.5, L1):
-EAL, VaR95, loss exceedance curve, top 5 scenarios, top contributors,
-Enterprise Risk Score. Every figure traces to a run ID -- nothing here is
-a literal constant (CLAUDE.md rule 1).
+"""Executive dashboard: EAL, VaR95, loss exceedance curve, top 5 scenarios,
+top contributors, Enterprise Risk Score. Every figure traces to a run ID;
+nothing here is a literal constant.
 """
 
 from __future__ import annotations
@@ -41,11 +40,10 @@ def _load_org_run(seed: int, n_iter: int):
 
 
 def _enterprise_risk_score(eal: float, revenue_inr: float) -> float:
-    """Documented monotone mapping of EAL-as-share-of-revenue onto 0-100
-    (build-spec.md section 3.5). ASSUMPTION: caps at 100 once EAL reaches
-    5% of revenue -- there is no verified public calibration for this cap
-    (PLAN.md section 7 lists the same gap for control efficacy); revisit
-    once real loss history exists."""
+    """Documented monotone mapping of EAL-as-share-of-revenue onto 0-100.
+    ASSUMPTION: caps at 100 once EAL reaches 5% of revenue; there is no
+    verified public calibration for this cap. Revisit once real loss
+    history exists."""
     if revenue_inr <= 0:
         return 0.0
     share = eal / revenue_inr
@@ -84,7 +82,7 @@ col4.metric(
 st.caption(
     f"Run ID: `{org.run_id}` · seed={org.seed} · n_iter={org.n_iter} · "
     f"engine v{next(iter(org.scenario_results.values())).engine_version if org.scenario_results else 'n/a'}. "
-    "VaR is a percentile of simulated annual loss, not a regulatory VaR (build-spec.md section 1.4)."
+    "VaR is a percentile of simulated annual loss, not a regulatory VaR."
 )
 
 section_header("Loss Exceedance Curve", icon="\U0001f4c9")
@@ -199,11 +197,10 @@ else:
 
 section_header("EAL Trend", icon="\U0001f4c8")
 st.caption(
-    "Every stored org-level run at this session's seed, in the order it was computed -- "
-    "a real accumulation of runs over time, not a fabricated 12-week series (PLAN.md's "
-    "cut line for Task 19's fuller history). Filtered to ONE seed so a step here reflects "
-    "a real DB change (a new finding, a coverage change, a fresh `make fetch-vuln-intel`), "
-    "never Monte Carlo re-roll noise (R3 guardrail: 'no seed-per-refresh noise')."
+    "Every stored org-level run at this session's seed, in the order it was computed: "
+    "a real accumulation of runs over time, not a fabricated series. Filtered to ONE seed "
+    "so a step here reflects a real database change (a new finding, a coverage change, a "
+    "fresh vulnerability-intel refresh), never Monte Carlo re-roll noise."
 )
 trend_rows = org_eal_trend(seed=settings.default_seed)
 if len(trend_rows) >= 2:

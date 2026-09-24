@@ -1,5 +1,5 @@
-"""Technical dashboard (build-spec.md section 3.5, L1): finding and asset
-tables with filters, remediation backlog with ageing.
+"""Technical dashboard: finding and asset tables with filters, remediation
+backlog with ageing.
 """
 
 from __future__ import annotations
@@ -86,18 +86,14 @@ if finding_rows:
     open_df = finding_df[finding_df["status"] == "open"].sort_values("age_days", ascending=False)
     st.dataframe(open_df, hide_index=True, width="stretch")
 else:
-    st.info(
-        "No findings yet -- the real vulnerability intelligence and CSV importer "
-        "land in PLAN.md Tasks 8-9. This table will populate once findings exist."
-    )
+    st.info("No findings yet. This table will populate once findings exist.")
 
 section_header("Top Remediation Actions", icon="\u2728")
 st.caption(
     "Ranked by severity weight x asset criticality, with real CISA KEV-listed CVEs "
-    "weighted higher ('KEV-first patching', build-spec.md section 3.3). Run "
-    "`make fetch-vuln-intel` to pull the current KEV catalog and EPSS scores "
-    "(PLAN.md Task 8) -- this is a proxy risk score, not a simulated ΔEAL, "
-    "labeled as such rather than presented as more precise than it is."
+    "weighted higher (KEV-first patching). Run `make fetch-vuln-intel` to pull the "
+    "current KEV catalog and EPSS scores. This is a proxy risk score, not a simulated "
+    "ΔEAL, labeled as such rather than presented as more precise than it is."
 )
 recommendations = top_finding_recommendations(limit=10)
 if recommendations:
@@ -124,11 +120,9 @@ st.caption(
     "Telemetry-driven ExposureMult: the Vuln factor is scaled by the current open-finding "
     "population (KEV-listed and high-EPSS CVEs weigh more), clipped to "
     f"[{settings.exposure_mult_lo}x, {settings.exposure_mult_hi}x] so no single finding can push "
-    "EAL past that bound (build-spec.md risk R1's guardrail -- see "
-    "tests/test_exposure_guardrail.py). The tornado chart perturbs each factor by "
-    f"±{int(settings.tornado_perturbation_pct * 100)}% one at a time (same random draws each "
-    "time, per build-spec.md's common-random-numbers rule) to show which factor's uncertainty "
-    "moves EAL the most."
+    "EAL past that bound. The tornado chart perturbs each factor by "
+    f"±{int(settings.tornado_perturbation_pct * 100)}% one at a time, using the same random "
+    "draws each time, to show which factor's uncertainty moves EAL the most."
 )
 
 with session_scope() as session:
@@ -145,10 +139,10 @@ if org.scenario_results:
     with badge_col:
         flags = []
         if chosen.stability and chosen.stability.get("fragile"):
-            flags.append("🔶 **Fragile** — one factor's swing alone moves EAL more than "
+            flags.append("🔶 **Fragile**: one factor's swing alone moves EAL more than "
                           f"{int(settings.fragile_swing_threshold * 100)}%")
         if chosen.stability and chosen.stability.get("unstable"):
-            flags.append("🔷 **Unstable** — Monte Carlo std error exceeds "
+            flags.append("🔷 **Unstable**: Monte Carlo std error exceeds "
                           f"{int(settings.unstable_stderr_threshold * 100)}% of EAL; consider more iterations")
         if not flags:
             st.success("Stable: neither Fragile nor Unstable at current thresholds.")
@@ -201,9 +195,8 @@ else:
 
 section_header("Drill-down: Organization → Business Unit → Asset → Finding", icon="\U0001f50e")
 st.caption(
-    "Live from the DB via nested expanders -- no fancy client-side tree widget, per "
-    "PLAN.md's cut line ('drop fancy drill-down navigation, use plain filtered tables "
-    "instead'), but real: expanding a node re-queries and shows exactly what's stored."
+    "Live from the database via nested expanders, not a client-side tree widget: "
+    "expanding a node re-queries and shows exactly what's stored."
 )
 with session_scope() as session:
     orgs = session.query(m.Organization).all()

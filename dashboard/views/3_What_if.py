@@ -1,7 +1,6 @@
-"""Scenario simulation (build-spec.md section 3.3, L1): sliders on control
-coverage, reruns with the SAME random draws via apply_controls(), shows
-delta-EAL/delta-VaR95. No number here is invented -- every figure comes from
-a fresh engine run (CLAUDE.md rule 1).
+"""Scenario simulation: sliders on control coverage, reruns with the SAME
+random draws via apply_controls(), shows delta-EAL/delta-VaR95. No number
+here is invented; every figure comes from a fresh engine run.
 """
 
 from __future__ import annotations
@@ -48,7 +47,7 @@ with session_scope() as session:
         )
 
 if not control_types:
-    st.info("This scenario has no linked controls yet (PLAN.md Task 6+ extends this).")
+    st.info("This scenario has no linked controls yet.")
     st.stop()
 
 st.write("Adjust control coverage below and compare against the measured baseline.")
@@ -73,7 +72,7 @@ modified = apply_controls(scenario_id, control_overrides=overrides, seed=seed)
 
 # Common random numbers (same seed, same iteration order) make baseline and
 # modified PAIRED per iteration, so their difference is a proper per-draw
-# delta-EAL sample -- a much tighter, more honest interval than P10-P90 of
+# delta-EAL sample: a much tighter, more honest interval than P10-P90 of
 # either side's raw annual-loss distribution (which is dominated by Poisson
 # zero-inflation, not by uncertainty in the control's effect).
 delta_eal, delta_ci_low, delta_ci_high = paired_delta_eal_ci(baseline.loss_vector, modified.loss_vector)
@@ -115,5 +114,5 @@ st.caption(
     "(common random numbers, so a no-change slider gives exactly delta-EAL = 0). "
     "The Δ-EAL P10-P90 range comes from the PAIRED per-iteration difference "
     "(modified minus baseline, same random draws), not from either side's raw "
-    "annual-loss spread (build-spec.md section 3.5)."
+    "annual-loss spread."
 )

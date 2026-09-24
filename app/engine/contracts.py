@@ -1,11 +1,11 @@
-"""Interface contracts, fixed in build-spec.md section 2.2.
+"""Interface contracts for the engine.
 
 Thin public wrappers: the dataclasses live here (so risk_contract.py can
 import them back without a circular import), and each function delegates to
 its real implementation in monte_carlo.py / risk_contract.py. Downstream
 code (API routers, dashboard pages, tests) should import from this module,
-not from the implementation modules directly -- this is the stable contract
-build-spec.md section 2.2 asks the whole project to agree on.
+not from the implementation modules directly: this is the stable contract
+the whole project agrees on.
 """
 
 from __future__ import annotations
@@ -37,7 +37,7 @@ class RunResult:
     exposure_mult: float = 1.0
     exposure_mult_clipped: bool = False
     exposure_breakdown: dict | None = None
-    stability: dict | None = None  # Fragile/Unstable flags, PLAN.md Task 15
+    stability: dict | None = None  # Fragile/Unstable flags
 
 
 @dataclass
@@ -51,7 +51,7 @@ class OrgResult:
 
 
 def simulate(inputs: dict, seed: int, n_iter: int) -> np.ndarray:
-    """Event-level Monte Carlo per the Risk Contract (build-spec.md section 1.4)."""
+    """Event-level Monte Carlo per the Risk Contract."""
     from app.engine.monte_carlo import simulate as _simulate
 
     return _simulate(inputs, seed, n_iter)
@@ -72,7 +72,7 @@ def run_scenario(scenario_id: str, overrides: dict, seed: int) -> RunResult:
 
 
 def run_org(overrides: dict, seed: int) -> OrgResult:
-    """Sums scenario loss vectors iteration-by-iteration. Never sum VaR directly (risk R3)."""
+    """Sums scenario loss vectors iteration-by-iteration. Never sum VaR directly."""
     from app.engine.risk_contract import run_org_impl
 
     return run_org_impl(overrides, seed)
@@ -87,7 +87,7 @@ def attribute(run_id: str, method: str = "allocation") -> list[dict]:
 
 def apply_controls(scenario_id: str, control_overrides: dict, seed: int) -> RunResult:
     """Mutates control state/effects in memory and reruns with the SAME random draws
-    (common random numbers), so ΔEAL isn't buried in Monte Carlo noise (risk R3)."""
+    (common random numbers), so ΔEAL isn't buried in Monte Carlo noise."""
     from app.engine.risk_contract import apply_controls_impl
 
     return apply_controls_impl(scenario_id, control_overrides, seed)

@@ -1,8 +1,7 @@
-"""Incident-clock engine (PLAN.md Task 17): turns one detection timestamp
-into every applicable regulatory reporting deadline, reading
-ReportingObligation rows from the DB (never hard-coded here -- CLAUDE.md
-rule 1) so `make enrich-vuln-intel`-style catalogue updates change the
-clocks without a code change.
+"""Incident-clock engine: turns one detection timestamp into every
+applicable regulatory reporting deadline, reading ReportingObligation
+rows from the DB (never hard-coded here) so `make enrich-vuln-intel`-style
+catalogue updates change the clocks without a code change.
 """
 
 from __future__ import annotations
@@ -31,11 +30,10 @@ def compute_incident_clocks(
 ) -> list[IncidentClock]:
     """Returns one IncidentClock per ReportingObligation row (optionally
     filtered to those applicable to `entity_type`), each with its deadline
-    computed from `detected_at` -- except a regime whose
+    computed from `detected_at`, except a regime whose
     `effective_from` is still in the future relative to `detected_at`,
     which is returned with `in_force=False` and `deadline=None`
-    (PLAN.md Task 17 done-when: "DPDP showing 'not yet in force' before
-    13 May 2027")."""
+    (e.g. DPDP showing "not yet in force" before 13 May 2027)."""
     if detected_at.tzinfo is None:
         detected_at = detected_at.replace(tzinfo=dt.UTC)
 

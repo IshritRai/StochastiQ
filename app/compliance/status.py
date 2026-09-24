@@ -1,7 +1,7 @@
-"""compliance_status(framework, scope) -> DataFrame, per build-spec.md section 2.2.
+"""compliance_status(framework, scope) -> DataFrame.
 
-Status is computed, never typed in (build-spec.md section 3.6's done-when
-test: "fixing a finding turns its mapped subcategory from gap to met").
+Status is computed, never typed in: fixing a finding turns its mapped
+subcategory from gap to met.
 """
 
 from __future__ import annotations
@@ -13,8 +13,8 @@ from app.data.db import session_scope
 
 # Coverage thresholds for control-type-backed mappings (e.g. patch management
 # coverage -> ID.RA-01). ASSUMPTION: no verified public threshold exists for
-# "how much control coverage counts as compliant" (same gap PLAN.md section 7
-# documents for control efficacy); revisit once real assessment criteria exist.
+# "how much control coverage counts as compliant" (same gap documented for
+# control efficacy); revisit once real assessment criteria exist.
 _COVERAGE_MET_THRESHOLD = 0.80
 _COVERAGE_PARTIAL_THRESHOLD = 0.40
 
@@ -52,7 +52,7 @@ def _control_type_status(session, control_type_id: str) -> str:
 def compliance_status(framework: str = "NIST CSF", scope: str = "org") -> list[dict]:
     """Computes and persists ComplianceStatus rows for every active,
     subcategory-level FrameworkControl in `framework`. Returns the rows as
-    plain dicts (a DataFrame-shaped list, per the build-spec.md contract)."""
+    plain dicts (a DataFrame-shaped list)."""
     with session_scope() as session:
         fw = session.query(m.Framework).filter_by(name=framework, retired=False).first()
         if fw is None:

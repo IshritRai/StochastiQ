@@ -1,6 +1,5 @@
-"""Compliance and Framework Mapping (build-spec.md section 3.6, L1): NIST
-CSF 2.0 heatmap by Function, computed from finding/control-coverage status
--- never typed in (CLAUDE.md rule 1)."""
+"""Compliance and Framework Mapping: NIST CSF 2.0 heatmap by Function,
+computed from finding/control-coverage status, never typed in."""
 
 from __future__ import annotations
 
@@ -34,16 +33,15 @@ with session_scope() as session:
 
 if not frameworks:
     st.info(
-        "No frameworks imported yet. Run `make seed` -- NIST CSF 2.0 import happens "
-        "as part of the seed step (PLAN.md Task 6)."
+        "No frameworks imported yet. Run `make seed`: NIST CSF 2.0 import happens "
+        "as part of the seed step."
     )
     st.stop()
 
 st.caption(
     "All 6 Functions, 22 Categories and 106 Subcategories are NIST's own official "
     "CSF 2.0 OSCAL catalog (public domain), not a hand-typed subset. The "
-    "finding-to-control mapping is still a starter, unvalidated by an assessor "
-    "(build-spec.md risk R6)."
+    "finding-to-control mapping is still a starter, unvalidated by an assessor."
 )
 
 rows = compliance_status(framework="NIST CSF", scope="org")
@@ -131,15 +129,13 @@ else:
 section_header("Indian Regulatory Catalogues", icon="\U0001f1ee\U0001f1f3")
 st.caption(
     "RBI's 2026 NBFC Cybersecurity Directions (RBI/DoS/2026-27/461) and SEBI's CSCRF, "
-    "hand-built from paragraph/standard IDs (never the regulator's full clause text, "
-    "per CLAUDE.md's ISO/CIS licensing rule extended here). Every row below is now "
-    "`verified=True` against a primary source -- the RBI Directions PDF read in full, "
-    "SEBI's primary CSCRF circular, SEBI's own CSCRF FAQ PDF, and Annexure-O's own "
-    "Table 36 for the incident-response VAPT-closure timeline (see "
-    "app/compliance/rbi_sebi_data.py's module docstring for exactly what was read). "
-    "The incident-clock deadlines below were confirmed the same way, including DPDP's "
-    "72-hour clock against the actual Gazette notification text (G.S.R. 846(E)) -- "
-    "every regime and every control is now marked verified."
+    "hand-built from paragraph/standard IDs, never the regulator's full clause text. "
+    "Every row below is `verified=True` against a primary source: the RBI Directions "
+    "PDF read in full, SEBI's primary CSCRF circular, SEBI's own CSCRF FAQ PDF, and "
+    "Annexure-O's own Table 36 for the incident-response VAPT-closure timeline. The "
+    "incident-clock deadlines below were confirmed the same way, including DPDP's "
+    "72-hour clock against the actual Gazette notification text (G.S.R. 846(E)); "
+    "every regime and every control is marked verified."
 )
 with session_scope() as session:
     reg_frameworks = [

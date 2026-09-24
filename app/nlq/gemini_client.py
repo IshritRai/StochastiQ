@@ -1,11 +1,11 @@
 """Thin wrapper around the Gemini API (google-genai SDK), used only for two
-narrow jobs in the NL layer (Task 16, build-spec.md risk R5):
+narrow jobs in the NL layer:
 
-1. select_intent -- pick ONE name from a fixed allow-list of existing,
+1. select_intent: pick ONE name from a fixed allow-list of existing,
    already-tested intent handlers (app/nlq/router.py's 9 _handle_* functions).
    Gemini never gets to run arbitrary code, query the DB directly, or invent
    an intent that isn't in the allow-list.
-2. phrase_answer -- turn an already-computed structured result (figures the
+2. phrase_answer: turn an already-computed structured result (figures the
    *code* computed, not the model) into one natural sentence. Gemini is
    explicitly instructed to use only the given numbers; app/nlq/llm_router.py
    independently verifies that afterwards (it does not trust the instruction
@@ -80,11 +80,10 @@ def select_intent(question: str, allowed_intents: list[str]) -> str | None:
 
 def phrase_answer(question: str, intent: str, figures: dict, fallback_text: str) -> str | None:
     """Ask Gemini to phrase one sentence for `question`, using only the
-    numbers already present in `figures` (computed by code, per
-    build-spec.md risk R5 -- EPSS/VaR/etc. must never be phrased as
-    something the model derived). Returns None on any failure; the caller
-    also independently re-checks the numbers, so this is defense in depth,
-    not the only guardrail."""
+    numbers already present in `figures` (computed by code: EPSS/VaR/etc.
+    must never be phrased as something the model derived). Returns None on
+    any failure; the caller also independently re-checks the numbers, so
+    this is defense in depth, not the only guardrail."""
     client = _get_client()
     if client is None:
         return None

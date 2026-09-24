@@ -1,7 +1,7 @@
 [project]
 name = "stochastiq"
 version = "0.1.0"
-description = "AI-powered continuous cyber risk quantification and investment optimization platform (SIH PS 26105)"
+description = "AI-powered continuous cyber risk quantification and investment optimization platform"
 requires-python = ">=3.11"
 dependencies = [
     "fastapi>=0.115",

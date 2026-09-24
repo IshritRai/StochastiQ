@@ -1,5 +1,5 @@
 """Imports the RBI 2026 Directions + SEBI CSCRF catalogues and reporting
-obligations (PLAN.md Task 17). Mirrors csf_import.py's shape."""
+obligations. Mirrors csf_import.py's shape."""
 
 from __future__ import annotations
 
@@ -20,9 +20,9 @@ from app.compliance.rbi_sebi_data import (
 )
 from app.data import models as m
 
-# (rule_id, control_id) -- cross-framework finding-to-control mapping,
+# (rule_id, control_id): cross-framework finding-to-control mapping,
 # same "starter"/confidence=0.5 pattern as csf_import.py's
-# STARTER_MAPPING_RULES (build-spec.md risk R6: validate before use).
+# STARTER_MAPPING_RULES; validate before use.
 # rule_id must match a FindingRule inserted by csf_import.STARTER_FINDING_RULES;
 # control_id must match a control_id in RBI_CONTROLS or SEBI_CONTROLS above.
 # Only mapped where the correspondence is direct, not forced for every rule:

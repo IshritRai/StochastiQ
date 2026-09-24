@@ -1,13 +1,12 @@
 """Imports the NIST CSF 2.0 structure (app/compliance/csf_data.py) and a
-starter finding-to-control mapping (build-spec.md section 3.6, L1).
+starter finding-to-control mapping.
 
 The starter mapping below reuses the exact (finding-type, CSF-subcategory)
 pairs from docs/research/control_mapping.md section 1e's worked table,
 which already carries its own source trail back to NIST's Informative
 References / OLIR. Every row is inserted with source="starter" and
 confidence=0.5, per that table's own instruction: "Validate every row with
-an assessor before use" (build-spec.md risk R6: "mappings labelled starter
-until validated").
+an assessor before use" (mappings labelled starter until validated).
 """
 
 from __future__ import annotations

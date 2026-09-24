@@ -1,16 +1,15 @@
-"""Streamlit entry point / navigation shell (PLAN.md Task 5).
+"""Streamlit entry point / navigation shell.
 
 This file owns everything that must run exactly once per interaction,
 before any page's body: `st.set_page_config`, the shared stylesheet, the
-sidebar brand mark, and the `st.navigation` route table itself -- grouped
+sidebar brand mark, and the `st.navigation` route table itself, grouped
 into sections so the sidebar reads as a designed IA (Overview / Risk /
 Decisions) instead of Streamlit's flat auto-generated file list. Actual
 page content lives in `dashboard/views/*.py`; each one only renders its
-body -- no `set_page_config`/CSS/brand calls there, since those already
+body (no `set_page_config`/CSS/brand calls there), since those already
 ran here before `nav.run()` executes the selected page.
 
-Every figure must trace to a SIMULATION_RUN id once the engine (Task 3+)
-lands -- no hard-coded numbers here (CLAUDE.md rule 1).
+Every figure must trace to a SIMULATION_RUN id. No hard-coded numbers here.
 """
 
 from __future__ import annotations

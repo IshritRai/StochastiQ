@@ -1,8 +1,8 @@
-"""EAL trend over stored SimulationRun rows (PLAN.md Task 18).
+"""EAL trend over stored SimulationRun rows.
 
-R3 guardrail #7 ("no seed-per-refresh noise") means the trend must not
-mix runs from different seeds -- a run-to-run EAL change should reflect a
-real change in the DB (a new finding, a control coverage change, a fresh
+The "no seed-per-refresh noise" guardrail means the trend must not mix
+runs from different seeds: a run-to-run EAL change should reflect a real
+change in the DB (a new finding, a control coverage change, a fresh
 `make fetch-vuln-intel`), never Monte Carlo noise from re-rolling the seed.
 `org_eal_trend` therefore filters to a single seed (the caller's, default
 `settings.default_seed`) and org-level runs (`scenario_id IS NULL`) only.

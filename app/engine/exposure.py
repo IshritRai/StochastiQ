@@ -1,26 +1,26 @@
-"""Telemetry-driven ExposureMult (PLAN.md Task 15, build-spec.md section
-1.4 step 2 -- previously an identity 1.0 placeholder at L1).
+"""Telemetry-driven ExposureMult (previously an identity 1.0 placeholder
+at L1).
 
 `compute_exposure_mult` turns the org's currently-open findings into a
 single multiplier on the Vuln factor: findings on real CVEs that are in
 CISA's KEV catalog, and/or carry a high EPSS score, count for more than a
 plain misconfig finding. The raw score is UNBOUNDED by construction (it is
 a literal average of real severity/KEV/EPSS weights, so a genuinely bad
-telemetry snapshot can and should push it far from 1.0) -- the hard bound
-required by build-spec.md risk R1 ("EAL must not swing arbitrarily because
-of one extreme finding") is enforced downstream, in
-`risk_contract._apply_exposure_mult`'s `np.clip(..., exposure_mult_lo,
-exposure_mult_hi)`, which is the ONE place the bound is applied. This
-module never clips itself, so the guardrail test
-(tests/test_exposure_guardrail.py) is a genuine end-to-end check of that
-one clip, not a test of a second, possibly-inconsistent bound here.
+telemetry snapshot can and should push it far from 1.0); the hard bound
+(EAL must not swing arbitrarily because of one extreme finding) is
+enforced downstream, in `risk_contract._apply_exposure_mult`'s
+`np.clip(..., exposure_mult_lo, exposure_mult_hi)`, which is the ONE
+place the bound is applied. This module never clips itself, so the
+guardrail test (tests/test_exposure_guardrail.py) is a genuine end-to-end
+check of that one clip, not a test of a second, possibly-inconsistent
+bound here.
 
-`is_assumption=True`-flavoured design choices (PLAN.md section 7):
+`is_assumption=True`-flavoured design choices:
 - KEV membership doubles a finding's weight (`kev_multiplier`).
 - EPSS score adds up to another 1x on top of the base weight (a finding
   with epss=1.0 is worth 2x its severity_weight; epss=0 adds nothing).
 - The neutral baseline (exposure_mult == 1.0) is "the average open finding
-  looks like a severity_weight=1.0 finding with no KEV/EPSS boost" -- i.e.
+  looks like a severity_weight=1.0 finding with no KEV/EPSS boost", i.e.
   a scenario with no open findings at all, or whose open findings average
   out to exactly that, gets no exposure adjustment.
 """
@@ -55,7 +55,7 @@ def _finding_weight(finding: m.Finding, vuln: m.Vulnerability | None) -> float:
 def compute_exposure_mult(session) -> ExposureBreakdown:
     """Org-wide, not scenario-scoped: ThreatScenario.scope_rule is a free-form
     JSON rule (not a structured asset filter this schema can query), so this
-    L2 pass uses the same telemetry -- all currently-open findings -- for
+    L2 pass uses the same telemetry (all currently-open findings) for
     every scenario. Documented L2 simplification; a per-scenario asset scope
     is a natural L3 follow-up once scope_rule gains a queryable structure."""
     findings = session.query(m.Finding).filter(m.Finding.status == "open").all()

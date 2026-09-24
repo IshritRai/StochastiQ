@@ -1,5 +1,5 @@
-"""Risk-to-compliance rupee link (PLAN.md Task 18): how much of the org's
-EAL is attributable to each unmet (gap/partial) framework control.
+"""Risk-to-compliance rupee link: how much of the org's EAL is attributable
+to each unmet (gap/partial) framework control.
 
 Method (documented L2 simplification, `is_assumption=true` in spirit):
 for every non-met control, its "gap weight" is the sum of severity_weight
@@ -7,11 +7,11 @@ across its mapped finding_rule's OPEN findings, plus (1 - coverage_pct) for
 every mapped control_type (an uncovered control contributes weight
 proportional to how uncovered it is). A control's EAL share is then
 run.eal * (its gap weight / total gap weight across all non-met, mapped
-controls) -- the SAME allocation-by-weight approach `attribute_impl`
-already uses for assets (build-spec.md section 3.2), just reused here for
-framework controls instead of assets. This is a real, run-traceable number
-(CLAUDE.md rule 1/2): it always sums to exactly the run's EAL across the
-controls it covers, and every row is stamped with `run_id`.
+controls): the same allocation-by-weight approach `attribute_impl`
+already uses for assets, just reused here for framework controls instead
+of assets. This is a real, run-traceable number: it always sums to exactly
+the run's EAL across the controls it covers, and every row is stamped
+with `run_id`.
 """
 
 from __future__ import annotations

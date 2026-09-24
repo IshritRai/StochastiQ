@@ -1,9 +1,9 @@
 """Distribution parameters for the synthetic demo company.
 
-PLAN.md Task 1: a tiny hand-written dataset (3 BUs, ~30 assets, 3 services,
-8 scenarios). Every parameter below carries a source note, per CLAUDE.md
-("Synthetic inputs, real mechanics; label which is which") and build-spec.md
-section 3.1 ("Every distribution parameter in the config has a source note").
+A tiny hand-written dataset (3 BUs, ~30 assets, 3 services, 8 scenarios).
+Every parameter below carries a source note: synthetic inputs, real
+mechanics, labeled which is which, and every distribution parameter in the
+config has a source note.
 
 The company itself (a mid-size Indian NBFC with a broking subsidiary) is
 SYNTHETIC. The distribution shapes and anchor values below are drawn from
@@ -24,10 +24,10 @@ ORG_SIZE_BAND = "mid-market"
 BUSINESS_UNITS = ["Lending Operations", "Broking Subsidiary", "Corporate IT"]
 
 # Beta(a, b) for the hidden per-BU maturity variable. Stays generator-only,
-# never enters the DB (build-spec.md section 3.1). Source: no verified public
-# maturity distribution exists (loss-caliberation.md, "Not found" item) --
-# these shape parameters are an assumption chosen to give a realistic spread
-# (mean ~0.55, moderate variance) across only 3 BUs.
+# never enters the DB. Source: no verified public maturity distribution
+# exists (loss-caliberation.md, "Not found" item); these shape parameters
+# are an assumption chosen to give a realistic spread (mean ~0.55, moderate
+# variance) across only 3 BUs.
 MATURITY_BETA_A = 5.0
 MATURITY_BETA_B = 4.0
 
@@ -42,8 +42,8 @@ N_SCENARIOS = 8
 
 ASSET_TYPES = ["server", "workstation", "network_device", "database", "cloud_vm"]
 
-# Heavy-tailed asset criticality/records: Pareto shape (assumption, per
-# build-spec.md 3.1 "Asset counts, records and criticality are heavy-tailed").
+# Heavy-tailed asset criticality/records: Pareto shape (assumption; asset
+# counts, records and criticality are heavy-tailed).
 RECORDS_PARETO_SHAPE = 1.5
 RECORDS_SCALE = 1_000
 
@@ -65,13 +65,11 @@ class ThreatScenarioSpec:
 
 
 # Loss anchors are illustrative USD figures from docs/research/loss-caliberation.md,
-# converted at the single configurable FX rate in app.config (labeled illustrative
-# per build-spec.md section 1.4 / risk R2). Frequencies use Coalition's 1.54%
-# all-event claims rate as a segment anchor (secondary source), NOT applied
-# per-scenario at full value -- each scenario gets a fraction of it, so that
-# summed scenario frequencies stay consistent with the all-event anchor
-# (risk R2 guardrail: "A check that summed scenario frequencies are consistent
-# with the segment's all-event anchor").
+# converted at the single configurable FX rate in app.config (labeled
+# illustrative). Frequencies use Coalition's 1.54% all-event claims rate as
+# a segment anchor (secondary source), NOT applied per-scenario at full
+# value: each scenario gets a fraction of it, so that summed scenario
+# frequencies stay consistent with the all-event anchor.
 THREAT_SCENARIOS: list[ThreatScenarioSpec] = [
     ThreatScenarioSpec(
         name="Ransomware on lending core systems",
@@ -188,10 +186,9 @@ THREAT_SCENARIOS: list[ThreatScenarioSpec] = [
 ]
 
 # Links each scenario to the controls that affect it, and which top-level
-# factor they scale (build-spec.md section 1.4 step 3 / O-RA section 5.5's
-# four control categories). This is what makes apply_controls() move a
-# scenario's EAL at all -- without a row here, a control exists in the DB
-# but has no effect on any scenario (PLAN.md Task 3/7).
+# factor they scale (O-RA section 5.5's four control categories). This is
+# what makes apply_controls() move a scenario's EAL at all: without a row
+# here, a control exists in the DB but has no effect on any scenario.
 SCENARIO_CONTROL_LINKS: list[tuple[str, str, str]] = [
     ("Ransomware on lending core systems", "EDR coverage", "Vuln"),
     ("Ransomware on lending core systems", "Patch / vulnerability management", "Vuln"),

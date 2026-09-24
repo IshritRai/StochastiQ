@@ -1,6 +1,6 @@
 """Event-level Monte Carlo simulation and summary statistics.
 
-Implements build-spec.md section 1.4 steps 4-5 (simulate, summarize) and the
+Implements the simulate/summarize steps of the Risk Contract and the
 per-iteration algorithm from docs/research/fair-based-cyber-risk.md:
 
     1. Sample TEF (or CF x PoA).
@@ -11,7 +11,7 @@ per-iteration algorithm from docs/research/fair-based-cyber-risk.md:
 
 Event-level (not "one frequency draw x one loss draw") because a single
 sampled frequency times a single sampled loss understates variance when
-frequency exceeds 1 (build-spec.md risk R3).
+frequency exceeds 1.
 """
 
 from __future__ import annotations
@@ -30,11 +30,11 @@ def simulate(inputs: dict, seed: int, n_iter: int) -> np.ndarray:
     """Run the event-level Monte Carlo and return the annual-loss vector.
 
     `inputs` keys:
-      - "tef": scalar or {low, mode, high} -- Threat Event Frequency.
-      - "vuln": scalar or {low, mode, high} -- Vulnerability (0..1), already
+      - "tef": scalar or {low, mode, high}: Threat Event Frequency.
+      - "vuln": scalar or {low, mode, high}: Vulnerability (0..1), already
         adjusted for exposure/controls by the caller (run_scenario/apply_controls).
       - "plm_fixed" | ("plm_p05", "plm_p95") | "plm": primary loss magnitude.
-      - "slef": scalar or {low, mode, high} -- probability of a secondary loss.
+      - "slef": scalar or {low, mode, high}: probability of a secondary loss.
       - "slm_fixed" | ("slm_p05", "slm_p95") | "slm": secondary loss magnitude
         (only sampled for events that trigger a secondary loss; omit entirely
         to model no secondary loss).
@@ -43,10 +43,9 @@ def simulate(inputs: dict, seed: int, n_iter: int) -> np.ndarray:
     The RNG is re-seeded fresh from `seed` on every call and consumed in a
     fixed order (tef, vuln, poisson counts, primary losses, secondary trigger,
     secondary losses), so the same seed always reproduces the same draws
-    regardless of the numeric values in `inputs` -- this is what lets
-    apply_controls() use common random numbers (build-spec.md risk R3:
-    "comparing baseline and what-if with different random draws buries small
-    delta-EAL in noise").
+    regardless of the numeric values in `inputs`. This is what lets
+    apply_controls() use common random numbers: comparing baseline and
+    what-if with different random draws buries small delta-EAL in noise.
     """
     rng = np.random.default_rng(seed)
 

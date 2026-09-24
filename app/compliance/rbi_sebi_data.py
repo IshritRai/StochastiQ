@@ -1,13 +1,13 @@
-"""Hand-built RBI 2026 Directions + SEBI CSCRF catalogues (PLAN.md Task 17).
+"""Hand-built RBI 2026 Directions + SEBI CSCRF catalogues.
 
-CLAUDE.md: "ISO/CIS: IDs and short titles only" -- extended here as this
-project's own rule for any regulatory catalogue: paragraph/clause/standard
-numbers and a short title, never the regulator's full clause text (both
-RBI and SEBI publish their circulars for free, but reproducing them
-verbatim here would still misrepresent a paraphrase as the primary source).
+"ISO/CIS: IDs and short titles only" extended here as this project's own
+rule for any regulatory catalogue: paragraph/clause/standard numbers and a
+short title, never the regulator's full clause text (both RBI and SEBI
+publish their circulars for free, but reproducing them verbatim here would
+still misrepresent a paraphrase as the primary source).
 
-VERIFICATION STATUS (build-spec.md section 5's explicit gap), updated after
-a follow-up primary-source pass on 2026-09-24:
+VERIFICATION STATUS, updated after a follow-up primary-source pass on
+2026-09-24:
 
 - SEBI: the actual CSCRF circular (SEBI/HO/ITD-1/ITD_CSC_EXT/P/CIR/2024/113,
   Aug 20, 2024, Annexure-1) was fetched and read in full from sebi.gov.in.
@@ -147,10 +147,9 @@ SEBI_CONTROLS: list[tuple[str, str, str, bool]] = [
 ]
 
 # (regime, clock_hours, recipient, trigger, entity_types, effective_from, source_ref, verified)
-# PLAN.md Task 17 done-when: "feeding one detection timestamp produces all
-# clocks correctly, including DPDP showing 'not yet in force' before
-# 13 May 2027." DPDP's effective_from gates its own clock in
-# app/compliance/incident_clock.py.
+# Feeding one detection timestamp must produce all clocks correctly,
+# including DPDP showing "not yet in force" before 13 May 2027. DPDP's
+# effective_from gates its own clock in app/compliance/incident_clock.py.
 #
 # verified=True rows below were confirmed against the primary SEBI CSCRF
 # circular (SEBI/HO/ITD-1/ITD_CSC_EXT/P/CIR/2024/113, Aug 20 2024, fetched

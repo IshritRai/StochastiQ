@@ -1,12 +1,11 @@
-"""Gemini tool-calling layer for the NL query router (Task 16,
-build-spec.md risk R5).
+"""Gemini tool-calling layer for the NL query router.
 
 Gemini is NEVER allowed to compute or invent a number. It is only allowed
 to:
-  1. pick one intent name from `app.nlq.router.ALLOWED_INTENTS` -- a fixed
-     allow-list identical to Task 12's 9 rule-based handlers. There is no
-     freeform code execution and no direct DB access; Gemini gets a name,
-     and the code below is what actually calls the handler.
+  1. pick one intent name from `app.nlq.router.ALLOWED_INTENTS`: a fixed
+     allow-list identical to the rule-based handlers. There is no freeform
+     code execution and no direct DB access; Gemini gets a name, and the
+     code below is what actually calls the handler.
   2. phrase the final sentence, using only the numbers already present in
      that handler's own structured Answer.figures (computed by code from a
      DB row / Monte-Carlo run, with provenance already attached).
@@ -14,10 +13,10 @@ to:
 After Gemini phrases the sentence we independently re-check it:
 `verify_numbers_grounded` extracts every numeric token from the LLM's text
 and confirms each one also appears among the numbers in the structured
-result. If that check fails -- which it must never silently pass, per
-build-spec.md risk R5 -- we discard the LLM's text and use the
-code-generated sentence from the same handler instead, which is always
-numerically correct because code, not the model, inserted its numbers.
+result. If that check fails, which it must never silently pass, we
+discard the LLM's text and use the code-generated sentence from the same
+handler instead, which is always numerically correct because code, not
+the model, inserted its numbers.
 tests/test_nlq_llm.py asserts this end to end.
 """
 
@@ -75,8 +74,8 @@ def _figure_numeric_tokens(figures: dict) -> set[str]:
 
 
 def verify_numbers_grounded(llm_text: str, figures: dict) -> bool:
-    """build-spec.md risk R5: every number the LLM wrote must trace back to
-    the structured tool-call result it was given."""
+    """Every number the LLM wrote must trace back to the structured
+    tool-call result it was given."""
     llm_numbers = {t for t in _numeric_tokens(llm_text) if len(t.replace(".", "")) >= _MIN_DIGITS_TO_CHECK}
     if not llm_numbers:
         return True
@@ -86,7 +85,7 @@ def verify_numbers_grounded(llm_text: str, figures: dict) -> bool:
 
 def try_answer(question: str) -> Answer | None:
     """Returns a phrased Answer if Gemini is available and its phrasing
-    passes the R5 grounding check; returns None if Gemini is unavailable
+    passes the numeric grounding check; returns None if Gemini is unavailable
     (no/invalid key, network failure, ...) or picked no allow-listed
     intent, in which case the caller (app.nlq.router.answer) falls back to
     the plain rule-based router."""

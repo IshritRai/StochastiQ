@@ -1,12 +1,12 @@
-"""Reads the DB and applies the Risk Contract (build-spec.md section 1.4).
+"""Reads the DB and applies the Risk Contract.
 
-L1 scope note (documented simplification, per PLAN.md's L1-then-L2 ladder):
-control efficacy is applied at its PERT *mode* value deterministically here,
-scaling the whole baseline factor range by one multiplier. Sampling efficacy
-stochastically per iteration (a true step-3 Monte Carlo draw) is deferred to
-L2 alongside the tornado/sensitivity chart (PLAN.md Task 15), which is where
-that uncertainty becomes visible anyway. Exposure adjustment (step 2,
-telemetry-driven ExposureMult) is also L2 (PLAN.md Task 15) and is an
+L1 scope note (documented simplification, per the project's L1-then-L2
+ladder): control efficacy is applied at its PERT *mode* value
+deterministically here, scaling the whole baseline factor range by one
+multiplier. Sampling efficacy stochastically per iteration (a true step-3
+Monte Carlo draw) is deferred to L2 alongside the tornado/sensitivity
+chart, which is where that uncertainty becomes visible anyway. Exposure
+adjustment (step 2, telemetry-driven ExposureMult) is also L2 and is an
 identity multiplier (1.0) here.
 """
 
@@ -31,9 +31,9 @@ _PERT_FACTORS = ("TEF", "Vuln", "SLEF")
 _MAGNITUDE_FACTORS = ("PLM", "SLM")
 
 # O-RA control categories -> which top-level factor each category scales
-# (build-spec.md 1.4 step 3; avoidance/deterrent are folded into TEF since
-# this engine estimates TEF directly rather than decomposing into CF x PoA,
-# per O-RA's "estimate factors at the highest level" guidance).
+# (avoidance/deterrent are folded into TEF since this engine estimates TEF
+# directly rather than decomposing into CF x PoA, per O-RA's "estimate
+# factors at the highest level" guidance).
 _CATEGORY_TO_FACTOR = {
     "avoidance": "TEF",
     "deterrent": "TEF",
@@ -116,14 +116,14 @@ def clip_exposure_mult(exposure_mult: float) -> float:
 
 
 def _apply_exposure_mult(ranges: dict, exposure_mult: float) -> dict:
-    """Step 2 of the Risk Contract. Task 15: exposure_mult is telemetry-driven
+    """Step 2 of the Risk Contract. exposure_mult is telemetry-driven
     (app.engine.exposure.compute_exposure_mult), computed from currently-open
     findings unless the caller overrides it explicitly (e.g. What-if/NLQ
     what-if-delay). Either way it is clipped here to
-    [exposure_mult_lo, exposure_mult_hi] -- THE ONE PLACE this bound is
-    enforced (build-spec.md risk R1: one extreme finding must never swing
-    EAL past a plausible range). Callers needing the clipped value for
-    provenance should call `clip_exposure_mult` themselves before this."""
+    [exposure_mult_lo, exposure_mult_hi]: THE ONE PLACE this bound is
+    enforced (one extreme finding must never swing EAL past a plausible
+    range). Callers needing the clipped value for provenance should call
+    `clip_exposure_mult` themselves before this."""
     if exposure_mult == 1.0 or "Vuln" not in ranges:
         return ranges
     exposure_mult = clip_exposure_mult(exposure_mult)
@@ -156,12 +156,12 @@ def _derive_seed(seed: int, salt: str) -> int:
     """Deterministic per-scenario seed derived from an org-level seed.
 
     Scenarios inside one run_org() call must draw INDEPENDENT random numbers
-    from each other (they are modeled as independent risks, build-spec.md
-    risk R3: "adding independent per-scenario vectors understates the tail
-    if risks are correlated... state the L1 assumption" -- the assumption
-    here is independence, so the draws themselves must actually be
-    independent, not accidentally identical). Still fully reproducible: the
-    same (seed, scenario_id) pair always derives the same effective seed.
+    from each other (they are modeled as independent risks: "adding
+    independent per-scenario vectors understates the tail if risks are
+    correlated... state the L1 assumption"; the assumption here is
+    independence, so the draws themselves must actually be independent,
+    not accidentally identical). Still fully reproducible: the same
+    (seed, scenario_id) pair always derives the same effective seed.
     """
     digest = hashlib.sha256(f"{seed}:{salt}".encode()).hexdigest()
     return int(digest[:8], 16) % (2**31)
@@ -174,7 +174,7 @@ def _hash_inputs(inputs: dict, seed: int, n_iter: int) -> str:
 
 def _default_tail_cap(session, scenario: m.ThreatScenario) -> float | None:
     """Cap a single event's loss at one year of revenue for the scenario's most
-    exposed linked business service (PLAN.md section 7 assumption), or None if
+    exposed linked business service (documented assumption), or None if
     the scenario has no linked services yet."""
     services = session.query(m.BusinessService).all()
     if not services:
@@ -184,11 +184,11 @@ def _default_tail_cap(session, scenario: m.ThreatScenario) -> float | None:
 
 
 def _sensitivity_tornado(inputs: dict, seed: int, n_iter: int, pct: float | None = None) -> list[dict]:
-    """Tornado/sensitivity chart data (PLAN.md Task 15): perturbs each Risk
-    Contract factor by +-pct (default settings.tornado_perturbation_pct)
-    one at a time, using the SAME seed for every perturbation (common
-    random numbers, per build-spec.md risk R3), and records the resulting
-    EAL swing. Sorted widest-swing-first, as a tornado chart expects."""
+    """Tornado/sensitivity chart data: perturbs each Risk Contract factor
+    by +-pct (default settings.tornado_perturbation_pct) one at a time,
+    using the SAME seed for every perturbation (common random numbers),
+    and records the resulting EAL swing. Sorted widest-swing-first, as a
+    tornado chart expects."""
     pct = pct if pct is not None else settings.tornado_perturbation_pct
 
     factor_groups: dict[str, list[str]] = {}
@@ -230,13 +230,13 @@ def _sensitivity_tornado(inputs: dict, seed: int, n_iter: int, pct: float | None
 
 
 def _stability_flags(summary, tornado: list[dict]) -> dict:
-    """Fragile/Unstable flags (PLAN.md Task 15, build-spec.md risk R1).
+    """Fragile/Unstable flags.
 
     Fragile: the single most sensitive factor's tornado swing exceeds
-    `fragile_swing_threshold` of EAL -- i.e. this scenario's EAL hinges
+    `fragile_swing_threshold` of EAL, i.e. this scenario's EAL hinges
     heavily on one factor's exact value.
     Unstable: the Monte Carlo standard error is more than
-    `unstable_stderr_threshold` of EAL -- more iterations are needed before
+    `unstable_stderr_threshold` of EAL: more iterations are needed before
     this EAL should be trusted to the precision it's displayed at.
     """
     eal = summary.eal
@@ -256,13 +256,13 @@ def run_scenario_impl(scenario_id: str, overrides: dict, seed: int, persist: boo
     """Runs one scenario. `seed` is the caller-facing seed (e.g. the org-level
     seed, or the seed a user typed into the What-if page); the actual draws
     use `_derive_seed(seed, scenario_id)` so that:
-      (a) run_scenario(sid, ..., seed=S) and run_org(..., seed=S) -- which
+      (a) run_scenario(sid, ..., seed=S) and run_org(..., seed=S), which
           internally calls this same function for scenario `sid` with the
-          SAME seed=S -- always produce byte-identical results for that
+          SAME seed=S, always produce byte-identical results for that
           scenario (this is the ONE shared seeding function both paths use;
           do not derive a seed anywhere else), and
       (b) two different scenarios under the same org-level seed still draw
-          INDEPENDENT random numbers from each other (build-spec.md risk R3).
+          INDEPENDENT random numbers from each other.
     """
     from app.engine.contracts import RunResult  # local import: avoid circular import
 
@@ -366,7 +366,7 @@ def run_org_impl(overrides: dict, seed: int, persist: bool = True):
 
     n_iter = next(iter(scenario_results.values())).n_iter
     # Sum loss vectors iteration-by-iteration, NEVER sum VaR across scenarios
-    # (build-spec.md risk R3: "VaR is not additive").
+    # ("VaR is not additive").
     org_loss_vector = np.zeros(n_iter)
     for result in scenario_results.values():
         org_loss_vector += result.loss_vector
@@ -408,7 +408,7 @@ def attribute_impl(run_id: str, method: str = "allocation") -> list[dict]:
     """Allocate scenario EAL downward to assets, weighted by asset criticality
     x internet-facing status among assets linked (via ASSET_SERVICE) to any
     business service in the scenario's organization. L1: allocation only;
-    leave-one-out is L2 (build-spec.md section 3.2)."""
+    leave-one-out is L2."""
     if method != "allocation":
         raise NotImplementedError("Only method='allocation' is implemented at L1")
 
@@ -445,6 +445,6 @@ def attribute_impl(run_id: str, method: str = "allocation") -> list[dict]:
 def apply_controls_impl(scenario_id: str, control_overrides: dict, seed: int, persist: bool = True):
     """Rerun run_scenario with a different CONTROL_STATE coverage, using the
     SAME seed (common random numbers) so a zero-effect override gives
-    delta-EAL exactly 0, per build-spec.md risk R3."""
+    delta-EAL exactly 0."""
     overrides = {"control_state_overrides": control_overrides} if control_overrides else {}
     return run_scenario_impl(scenario_id, overrides, seed=seed, persist=persist)

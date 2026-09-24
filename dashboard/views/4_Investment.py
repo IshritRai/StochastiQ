@@ -1,8 +1,7 @@
-"""Investment Optimization (build-spec.md section 3.4, L1): standalone ΔEAL
-and ROSI per control option, 0/1 knapsack under a budget, joint
-re-simulation shown alongside the knapsack's additive estimate, and the
-Investment vs. Risk Reduction curve. Every number here comes from a fresh
-engine run (CLAUDE.md rule 1) -- nothing is typed in.
+"""Investment Optimization: standalone ΔEAL and ROSI per control option,
+0/1 knapsack under a budget, joint re-simulation shown alongside the
+knapsack's additive estimate, and the Investment vs. Risk Reduction curve.
+Every number here comes from a fresh engine run; nothing is typed in.
 """
 
 from __future__ import annotations
@@ -107,7 +106,7 @@ col4.metric(
 )
 st.caption(
     "The gap between the knapsack's additive estimate and the joint re-simulated result "
-    "is expected when controls interact (build-spec.md section 3.4) -- it is shown, not hidden. "
+    "is expected when controls interact; it is shown, not hidden. "
     "ΔVaR99 is the reduction in the 99th-percentile annual loss from the SAME joint re-simulation, "
     "shown alongside ΔEAL since a control can move the tail without moving the mean much."
 )

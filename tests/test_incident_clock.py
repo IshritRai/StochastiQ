@@ -26,13 +26,22 @@ def test_catalogue_import_creates_frameworks_and_obligations(engine_db):
     assert "RBI Cybersecurity and IT Governance Directions, 2026" in frameworks
     assert "SEBI Cybersecurity and Cyber Resilience Framework (CSCRF)" in frameworks
 
-    # Every hand-built catalogue row is honestly unverified against the
-    # primary source (rbi.org.in / sebi.gov.in) in this pass.
+    # FrameworkControl rows (RBI/SEBI catalogue entries) remain unverified:
+    # only secondary sources were fetchable for their paragraph/standard
+    # numbers in this pass.
     controls = session.query(m.FrameworkControl).all()
     assert controls
     assert all(c.verified is False for c in controls)
-    obligations = session.query(m.ReportingObligation).all()
-    assert all(o.verified is False for o in obligations)
+
+    # ReportingObligation rows are a mix: the SEBI CSCRF timelines and the
+    # standing CERT-In direction were confirmed against primary sources in
+    # a follow-up pass (see rbi_sebi_data.py's docstring); RBI's DAKSH
+    # paragraph and the DPDP breach clock remain unverified.
+    obligations = {o.regime: o for o in session.query(m.ReportingObligation).all()}
+    unverified_regimes = {"rbi_daksh", "dpdp_breach"}
+    for regime, obligation in obligations.items():
+        expected = regime not in unverified_regimes
+        assert obligation.verified is expected, regime
 
 
 def test_import_is_idempotent(engine_db):

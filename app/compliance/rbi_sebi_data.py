@@ -6,23 +6,38 @@ numbers and a short title, never the regulator's full clause text (both
 RBI and SEBI publish their circulars for free, but reproducing them
 verbatim here would still misrepresent a paraphrase as the primary source).
 
-VERIFICATION STATUS (build-spec.md section 5's explicit gap): every ID
-below was researched via secondary sources (WebSearch over industry/legal
-commentary sites, listed in `source_ref`) in this session, because the two
-primary sites did not yield a directly fetchable, paragraph-numbered
-document in this pass (rbi.org.in redirected to its homepage rather than
-the specific Direction's page; sebi.gov.in's circular index required a
-follow-up fetch not completed here). Per CLAUDE.md ("no hard-coded
-outputs... if you cannot verify a number against the primary source, set
-verified=False rather than guessing"), every row is `verified=False`.
-This is not a downgrade from the L1 plan -- the build spec already listed
-these exact numbers as unverified secondary-sourced facts (section 5) -- it
-is this pass being explicit that the L2 sweep did not close that gap
-either, rather than silently promoting them to "verified" for demo polish.
-Before a real demo: open the actual RBI Direction PDF (rbi.org.in) and the
-SEBI CSCRF master circular (sebi.gov.in) and flip each row to
-verified=True only once its exact paragraph/standard number is confirmed
-there.
+VERIFICATION STATUS (build-spec.md section 5's explicit gap), updated after
+a follow-up primary-source pass on 2026-09-24:
+
+- SEBI: the actual CSCRF circular (SEBI/HO/ITD-1/ITD_CSC_EXT/P/CIR/2024/113,
+  Aug 20, 2024, Annexure-1) was fetched and read in full from sebi.gov.in.
+  It confirms RS.CO.S1's 6-hour email notification to SEBI/CERT-In and
+  24-hour SEBI Incident Reporting Portal filing verbatim, and Annexure-O's
+  Table 36 confirms the escalation ladder: interim report 3 days,
+  mitigation measures 7 days, RCA report 30 days, forensic audit report up
+  to 75 days (VAPT closure is a separate, 45-day track not modelled here).
+  Every SEBI REPORTING_OBLIGATIONS row below is now `verified=True` against
+  that primary text. The FIRE-format alignment circular
+  (HO/(449)2026-ITD-5_DIV1/I/19448/2026, Aug 24 2026) was also confirmed to
+  exist via sebi.gov.in but its full text (paragraph-level detail on any
+  changed timelines) was not fetchable in this pass -- SEBI_CONTROLS rows
+  sourced only from secondary commentary remain `verified=False`.
+- RBI: the actual 2026 Direction was identified and its real circular
+  number confirmed (RBI/DoS/2026-27/461, "RBI (Non-Banking Financial
+  Companies - Cybersecurity, Technology: Risk, Resilience and Assurance
+  Framework) Directions, 2026", issued 31 July 2026), but the PDF itself
+  (rbidocs.rbi.org.in) sits behind a CAPTCHA that could not be passed in
+  this pass, so the exact paragraph number for the DAKSH 6-hour reporting
+  requirement is still unconfirmed against primary text. RBI_CONTROLS and
+  the rbi_daksh REPORTING_OBLIGATIONS row remain `verified=False`.
+- CERT-In's 6-hour requirement (cert_in row) is a standing 2022 direction
+  under IT Act s.70B(6), independently well-established and kept
+  `verified=True`.
+
+Before a real demo: pass the RBI PDF through OCR/manual retrieval to get
+past the CAPTCHA and confirm the exact DAKSH paragraph number, and fetch
+the SEBI FIRE-format circular's full text if any of the SEBI_CONTROLS rows
+need promoting.
 """
 
 from __future__ import annotations
@@ -95,12 +110,17 @@ SEBI_CONTROLS: list[tuple[str, str, str]] = [
     ),
 ]
 
-# (regime, clock_hours, recipient, trigger, entity_types, effective_from, source_ref)
+# (regime, clock_hours, recipient, trigger, entity_types, effective_from, source_ref, verified)
 # PLAN.md Task 17 done-when: "feeding one detection timestamp produces all
 # clocks correctly, including DPDP showing 'not yet in force' before
 # 13 May 2027." DPDP's effective_from gates its own clock in
 # app/compliance/incident_clock.py.
-REPORTING_OBLIGATIONS: list[tuple[str, float, str, str, list[str], dt.datetime | None, str]] = [
+#
+# verified=True rows below were confirmed against the primary SEBI CSCRF
+# circular (SEBI/HO/ITD-1/ITD_CSC_EXT/P/CIR/2024/113, Aug 20 2024, fetched
+# and read in full from sebi.gov.in on 2026-09-24) -- see this module's
+# docstring for what was and wasn't confirmed.
+REPORTING_OBLIGATIONS: list[tuple[str, float, str, str, list[str], dt.datetime | None, str, bool]] = [
     (
         "rbi_daksh",
         6.0,
@@ -109,6 +129,7 @@ REPORTING_OBLIGATIONS: list[tuple[str, float, str, str, list[str], dt.datetime |
         ["bank", "nbfc"],
         RBI_EFFECTIVE_DATE,
         "https://www.bitscore.in/resources/rbi-cybersecurity-directions-2026",
+        False,  # RBI/DoS/2026-27/461 PDF is CAPTCHA-gated; paragraph unconfirmed
     ),
     (
         "cert_in",
@@ -118,15 +139,17 @@ REPORTING_OBLIGATIONS: list[tuple[str, float, str, str, list[str], dt.datetime |
         ["bank", "nbfc", "any_body_corporate"],
         dt.datetime(2022, 4, 28, tzinfo=dt.UTC),  # CERT-In direction under IT Act s.70B(6), 28 Apr 2022
         "https://ogma.in/blog/rbi-cybersecurity-directions-2026-commercial-banks-nbfc-audit",
+        True,  # standing 2022 CERT-In direction, independently well-established
     ),
     (
         "sebi_email",
         6.0,
-        "SEBI (designated email)",
+        "SEBI (designated email, mkt_incidents@sebi.gov.in)",
         "detection",
         ["market_infrastructure_institution", "intermediary"],
         SEBI_EFFECTIVE_DATE,
-        "https://www.cybernx.com/sebi-cscrf-reporting-requirements/",
+        "https://www.sebi.gov.in/legal/circulars/aug-2024/cybersecurity-and-cyber-resilience-framework-cscrf-for-sebi-regulated-entities-res-_85964.html",
+        True,  # CSCRF RS.CO.S1, confirmed verbatim from primary circular
     ),
     (
         "sebi_portal",
@@ -135,7 +158,8 @@ REPORTING_OBLIGATIONS: list[tuple[str, float, str, str, list[str], dt.datetime |
         "detection",
         ["market_infrastructure_institution", "intermediary"],
         SEBI_EFFECTIVE_DATE,
-        "https://www.corplawupdates.in/updates/sebi-cyber-incident-reporting-fire-format-2026",
+        "https://www.sebi.gov.in/legal/circulars/aug-2024/cybersecurity-and-cyber-resilience-framework-cscrf-for-sebi-regulated-entities-res-_85964.html",
+        True,  # CSCRF RS.CO.S1, confirmed verbatim from primary circular
     ),
     (
         "sebi_interim",
@@ -144,7 +168,8 @@ REPORTING_OBLIGATIONS: list[tuple[str, float, str, str, list[str], dt.datetime |
         "detection",
         ["market_infrastructure_institution", "intermediary"],
         SEBI_EFFECTIVE_DATE,
-        "https://gurucul.com/blog/gurucul-boosts-cyber-resilience-in-indias-financial-sector-under-sebi-cscrf/",
+        "https://www.sebi.gov.in/legal/circulars/aug-2024/cybersecurity-and-cyber-resilience-framework-cscrf-for-sebi-regulated-entities-res-_85964.html",
+        True,  # CSCRF Annexure-O Table 36, confirmed from primary circular
     ),
     (
         "sebi_mitigation",
@@ -153,7 +178,8 @@ REPORTING_OBLIGATIONS: list[tuple[str, float, str, str, list[str], dt.datetime |
         "detection",
         ["market_infrastructure_institution", "intermediary"],
         SEBI_EFFECTIVE_DATE,
-        "https://gurucul.com/blog/gurucul-boosts-cyber-resilience-in-indias-financial-sector-under-sebi-cscrf/",
+        "https://www.sebi.gov.in/legal/circulars/aug-2024/cybersecurity-and-cyber-resilience-framework-cscrf-for-sebi-regulated-entities-res-_85964.html",
+        True,  # CSCRF Annexure-O Table 36, confirmed from primary circular
     ),
     (
         "sebi_rca",
@@ -162,18 +188,21 @@ REPORTING_OBLIGATIONS: list[tuple[str, float, str, str, list[str], dt.datetime |
         "detection",
         ["market_infrastructure_institution", "intermediary"],
         SEBI_EFFECTIVE_DATE,
-        "https://gurucul.com/blog/gurucul-boosts-cyber-resilience-in-indias-financial-sector-under-sebi-cscrf/",
+        "https://www.sebi.gov.in/legal/circulars/aug-2024/cybersecurity-and-cyber-resilience-framework-cscrf-for-sebi-regulated-entities-res-_85964.html",
+        True,  # CSCRF Annexure-O Table 36, confirmed from primary circular
     ),
     (
         "sebi_closure",
-        1800.0,  # 75 days, per PLAN.md Task 17's own spec; secondary sources found in this
-        # session corroborate a 45-day closure/VAPT deadline, not 75 -- flagged as an
-        # explicit discrepancy rather than silently reconciled (verified=False either way).
-        "SEBI Incident Reporting Portal (closure / VAPT report)",
+        1800.0,  # 75 days -- CSCRF Annexure-O Table 36's forensic-audit-report
+        # deadline, confirmed from the primary circular; this is a distinct track
+        # from VAPT closure (a separate 45-day requirement in CSCRF section 4.3,
+        # not modelled as its own clock here).
+        "SEBI Incident Reporting Portal (forensic audit report)",
         "detection",
         ["market_infrastructure_institution", "intermediary"],
         SEBI_EFFECTIVE_DATE,
-        "https://veritect.ai/digital-data-ai-law/sebi-cscrf-compliance-playbook",
+        "https://www.sebi.gov.in/legal/circulars/aug-2024/cybersecurity-and-cyber-resilience-framework-cscrf-for-sebi-regulated-entities-res-_85964.html",
+        True,  # CSCRF Annexure-O Table 36, confirmed from primary circular
     ),
     (
         "dpdp_breach",
@@ -183,5 +212,6 @@ REPORTING_OBLIGATIONS: list[tuple[str, float, str, str, list[str], dt.datetime |
         ["data_fiduciary"],
         dt.datetime(2027, 5, 13, tzinfo=dt.UTC),  # DPDP Rules commencement date
         "https://www.dpdpa.com/blogs/DPDPA_Implementation_Timeline.html",
+        False,  # secondary-sourced; DPDP Rules text itself not fetched in this pass
     ),
 ]

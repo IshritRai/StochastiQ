@@ -6,12 +6,12 @@ from __future__ import annotations
 import json
 
 from app.compliance.rbi_sebi_data import (
-    REPORTING_OBLIGATIONS,
     RBI_CONTROLS,
     RBI_EFFECTIVE_DATE,
     RBI_FRAMEWORK_NAME,
     RBI_SOURCE_URL,
     RBI_VERSION,
+    REPORTING_OBLIGATIONS,
     SEBI_CONTROLS,
     SEBI_EFFECTIVE_DATE,
     SEBI_FRAMEWORK_NAME,
@@ -68,7 +68,7 @@ def import_rbi_sebi_catalogue(session) -> dict:
 
     existing_regimes = {o.regime for o in session.query(m.ReportingObligation).all()}
     n_obligations_created = 0
-    for regime, clock_hours, recipient, trigger, entity_types, effective_from, source_ref in REPORTING_OBLIGATIONS:
+    for regime, clock_hours, recipient, trigger, entity_types, effective_from, source_ref, verified in REPORTING_OBLIGATIONS:
         if regime in existing_regimes:
             continue
         session.add(
@@ -80,7 +80,7 @@ def import_rbi_sebi_catalogue(session) -> dict:
                 trigger=trigger,
                 effective_from=effective_from,
                 source_ref=source_ref,
-                verified=False,
+                verified=verified,
             )
         )
         n_obligations_created += 1

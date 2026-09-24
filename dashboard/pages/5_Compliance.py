@@ -123,10 +123,13 @@ st.subheader("Indian Regulatory Catalogues (PLAN.md Task 17)")
 st.caption(
     "RBI's 2026 Cybersecurity Directions and SEBI's CSCRF, hand-built from paragraph/"
     "standard IDs (never the regulator's full clause text, per CLAUDE.md's ISO/CIS "
-    "licensing rule extended here). Every row below is honestly `verified=False`: "
+    "licensing rule extended here). Every control row below is honestly `verified=False`: "
     "sourced from secondary commentary in this pass, not confirmed against rbi.org.in "
     "or sebi.gov.in directly (see app/compliance/rbi_sebi_data.py's module docstring) "
-    "-- shown as a red ⚠️ badge rather than silently promoted for demo polish."
+    "-- shown as a red ⚠️ badge rather than silently promoted for demo polish. The "
+    "incident-clock deadlines below are different: SEBI's and CERT-In's timelines were "
+    "confirmed against SEBI's primary CSCRF circular in a follow-up pass and are marked "
+    "verified; RBI's DAKSH paragraph and the DPDP clock are not."
 )
 with session_scope() as session:
     reg_frameworks = [

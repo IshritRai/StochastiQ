@@ -33,9 +33,11 @@ if not has_data:
 
 st.subheader("Ask a question")
 st.caption(
-    "L1 intent router (keywords, not an LLM yet -- Gemini tool-calling lands in PLAN.md "
-    "Task 16). Every number in the answer comes from a real engine/DB call; questions "
-    "outside the 9 supported intents get an honest 'I can't answer that yet.'"
+    "Allow-listed Gemini tool-calling over the same 9 real engine/DB calls (PLAN.md "
+    "Task 16) when GEMINI_API_KEY is set, phrasing only -- every number still comes from "
+    "the structured tool result, never the model; falls back to the plain L1 keyword "
+    "router otherwise. Questions outside the 9 supported intents get an honest "
+    "'I can't answer that yet.'"
 )
 question = st.text_input(
     "e.g. \"What is our highest financial cyber risk today?\"", key="nlq_question"

@@ -58,12 +58,19 @@ matching with a `match_confidence` on `AssetSoftware` (honestly 0 for the
 synthetic inventory's placeholder software, since it carries no real
 versions to match against).
 
-Still open: Task 16's Gemini tool-calling upgrade to the NL layer needs a
-`GEMINI_API_KEY` in the environment (not yet set here — the current NL
-router works without it, since it's a keyword router, not an LLM); the rest
-of the L2 sweep (Tasks 15, 17, 18: telemetry-driven exposure, RBI/SEBI
-catalogues, incident clocks, compliance ₹ link) and demo hardening
-(Task 21) are next.
+Task 16 is also done: the NL router now tries allow-listed Gemini
+tool-calling first when `GEMINI_API_KEY` is set (`app/nlq/gemini_client.py`,
+`app/nlq/llm_router.py`) — Gemini may only pick an intent name from the same
+fixed set Task 12's regex router uses, and phrase the final sentence; it
+never computes a number. Every numeric token in the model's phrasing is
+checked against the structured tool-call result before being shown
+(`tests/test_nlq_llm.py`, the R5 guardrail); a mismatch, a missing/invalid
+key, or any Gemini failure falls straight back to the code-generated
+sentence, so the 9 intents behave the same with or without a key.
+
+Still open: the rest of the L2 sweep (Tasks 15, 17, 18: telemetry-driven
+exposure, RBI/SEBI catalogues, incident clocks, compliance ₹ link) and demo
+hardening (Task 21) are next.
 
 See `PLAN.md` for the full task-by-task order, the cut line, and the
 proposed assumption values (multiplier bounds, tail cap, control efficacy

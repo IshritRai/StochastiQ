@@ -17,6 +17,7 @@ dependencies = [
     "plotly>=5.24",
     "requests>=2.32",
     "python-dotenv>=1.0",
+    "google-genai>=1.0",
 ]
 
 [project.optional-dependencies]

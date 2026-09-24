@@ -114,6 +114,18 @@ Hours are solo-focused estimates; "cum." = cumulative. Each task names its done-
 
 *(Tasks 19–20 are explicitly optional stretch and are the first things to cut if the real budget is under ~150h; see §6.)*
 
+**Task 16 status: done.** `app/nlq/gemini_client.py` (thin google-genai wrapper)
+and `app/nlq/llm_router.py` (allow-listed tool-calling over the exact same 9
+handlers as Task 12's `ALLOWED_INTENTS`) sit in front of the existing
+rule-based router. Gemini only picks an intent name from that fixed dict and
+phrases the final sentence; `llm_router.verify_numbers_grounded` then checks
+every numeric token in Gemini's text against the numbers in the handler's
+own `Answer.figures`, per the R5 done-when test above (`tests/test_nlq_llm.py`,
+written before `llm_router.py` existed). Any Gemini failure (no/invalid
+`GEMINI_API_KEY`, network, rate limit, a failed grounding check) falls back
+to the code-generated sentence from the same handler, so the 9 intents work
+identically with or without a key.
+
 ---
 
 ## 5. Every component present at L1 first, then L2 in demo-value order

@@ -254,7 +254,25 @@ _INTENTS: list[tuple[re.Pattern, callable]] = [
 ]
 
 
-def answer(question: str) -> Answer:
+# Task 16 allow-list: every intent name Gemini is permitted to pick from,
+# mapped to the exact same handler functions the rule-based router above
+# uses. This is intentionally the ONLY way app/nlq/llm_router.py can reach
+# code -- Gemini selects a name from this fixed dict, never a function, a
+# DB query, or arbitrary code (build-spec.md risk R5).
+ALLOWED_INTENTS: dict[str, callable] = {
+    "org_eal": _handle_org_eal,
+    "top_scenarios": _handle_top_scenarios,
+    "highest_risk": _handle_highest_risk,
+    "top_vulnerabilities": _handle_top_vulnerabilities,
+    "eal_by_bu": _handle_eal_by_bu,
+    "whatif_mfa": _handle_whatif_mfa,
+    "delay_impact": _handle_delay_impact,
+    "best_plan_for_budget": _handle_best_plan_for_budget,
+    "compliance_gaps": _handle_compliance_gaps,
+}
+
+
+def _rule_based_answer(question: str) -> Answer:
     for pattern, handler in _INTENTS:
         if pattern.search(question):
             return handler(question)
@@ -264,3 +282,18 @@ def answer(question: str) -> Answer:
         "or compliance gaps.",
         intent=None,
     )
+
+
+def answer(question: str) -> Answer:
+    """L1 rule-based router by default; if GEMINI_API_KEY is set and valid,
+    Task 16's allow-listed tool-calling layer (app/nlq/llm_router.py) is
+    tried first for nicer phrasing. Gemini never computes or invents a
+    number -- see llm_router.try_answer's docstring. Any failure there
+    (missing/invalid key, network, rate limit) falls straight back to this
+    same rule-based path, so the 9 existing intents are unaffected."""
+    from app.nlq import llm_router
+
+    llm_answer = llm_router.try_answer(question)
+    if llm_answer is not None:
+        return llm_answer
+    return _rule_based_answer(question)

@@ -41,8 +41,8 @@ StochastiQ/
     nlq/            # intent router (L1), Gemini tool-calling (L2)
     config.py        # env-based config (DB URL, GEMINI_API_KEY, FX rate, seed)
   dashboard/
-    Home.py           # Streamlit entry
-    pages/            # Executive, Technical, What-if, Investment, Compliance
+    Home.py           # Streamlit entry: st.navigation shell (page config, CSS, sidebar brand, sectioned nav)
+    views/            # Home, Executive, Technical, What-if, Investment, Compliance (page bodies)
   tests/
     test_engine_guardrails.py   # R3 tests — written first, before engine code
     ... (mirrors app/ package layout)

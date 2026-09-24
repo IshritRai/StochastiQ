@@ -1,4 +1,4 @@
-"""Plain, importable logic for the What-if page (dashboard/pages/3_What_if.py).
+"""Plain, importable logic for the What-if page (dashboard/views/3_What_if.py).
 
 Split out of the page module because Streamlit page files execute top-level
 UI/DB code on import (st.set_page_config, session_scope() queries), so they

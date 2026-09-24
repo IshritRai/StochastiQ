@@ -257,6 +257,36 @@ def inject_page_css() -> str:
         font-weight: 500;
     }}
 
+    /* ---- st.navigation: sectioned nav (Overview / Risk / Decisions) ---- */
+    [data-testid="stSidebarNav"] [data-testid="stNavSectionHeader"] p {{
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.07em;
+        text-transform: uppercase;
+        color: {INK_MUTED};
+        margin: 0;
+    }}
+    [data-testid="stSidebarNav"] [data-testid="stSidebarNavLink"] {{
+        border-radius: 8px;
+        margin: 1px 0;
+        transition: background-color 0.12s ease;
+    }}
+    [data-testid="stSidebarNav"] [data-testid="stSidebarNavLink"] p {{
+        font-weight: 500;
+        color: {INK_SECONDARY};
+    }}
+    [data-testid="stSidebarNav"] [data-testid="stSidebarNavLink"]:hover {{
+        background-color: {ACCENT_SOFT};
+    }}
+    [data-testid="stSidebarNav"] [data-testid="stSidebarNavLink"][aria-current="page"] {{
+        background-color: {ACCENT_SOFT};
+        border-left: 3px solid {ACCENT};
+    }}
+    [data-testid="stSidebarNav"] [data-testid="stSidebarNavLink"][aria-current="page"] p {{
+        color: {ACCENT};
+        font-weight: 700;
+    }}
+
     /* ---- inputs & buttons ---- */
     .stTextInput input, .stNumberInput input, .stSelectbox [data-baseweb="select"] {{
         border-radius: 9px !important;

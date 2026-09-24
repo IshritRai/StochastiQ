@@ -20,15 +20,10 @@ from dashboard.theme import (
     CATEGORICAL,
     STATUS,
     apply_layout,
-    inject_page_css,
     page_header,
     section_header,
-    sidebar_brand,
 )
 
-st.set_page_config(page_title="Investment | StochastiQ", layout="wide", page_icon="\U0001f6e1️")
-st.markdown(inject_page_css(), unsafe_allow_html=True)
-sidebar_brand()
 page_header(
     "Investment Optimization",
     "ROSI per control, a 0/1 knapsack under a \u20b9 budget, and the joint re-simulated result.",

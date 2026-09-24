@@ -62,7 +62,7 @@ chose 0.67" from "this is just the rounded baseline" -- it applied 0.67 where
 the true baseline used 0.6667, a real (if tiny) coverage change, hence a
 nonzero delta.
 
-**Fix (`dashboard/whatif_logic.py`, used by `dashboard/pages/3_What_if.py`):**
+**Fix (`dashboard/whatif_logic.py`, used by `dashboard/views/3_What_if.py`):**
 `build_overrides(slider_values, slider_defaults)` only includes a control in
 the returned overrides dict if its current slider value differs from its own
 rounded default. An untouched slider sends NO override for that control at

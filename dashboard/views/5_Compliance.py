@@ -17,16 +17,11 @@ from app.data.db import session_scope
 from dashboard.theme import (
     STATUS,
     apply_layout,
-    inject_page_css,
     page_header,
     section_header,
-    sidebar_brand,
     status_badge_html,
 )
 
-st.set_page_config(page_title="Compliance | StochastiQ", layout="wide", page_icon="\U0001f6e1️")
-st.markdown(inject_page_css(), unsafe_allow_html=True)
-sidebar_brand()
 page_header(
     "Compliance and Framework Mapping",
     "NIST CSF 2.0 status, Indian regulatory catalogues, the incident-clock calculator, and \u20b9-at-risk per control.",

@@ -21,15 +21,10 @@ from dashboard.theme import (
     INK_SECONDARY,
     STATUS,
     apply_layout,
-    inject_page_css,
     page_header,
     section_header,
-    sidebar_brand,
 )
 
-st.set_page_config(page_title="Technical | StochastiQ", layout="wide", page_icon="\U0001f6e1️")
-st.markdown(inject_page_css(), unsafe_allow_html=True)
-sidebar_brand()
 page_header(
     "Technical View",
     "Asset and finding inventory, remediation backlog, and scenario sensitivity.",

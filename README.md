@@ -18,7 +18,7 @@ CIS, RBI, SEBI) are real.**
 - `app/data/` — SQLAlchemy models (`models.py`, implementing `docs/build-spec.md` section 1 in full), DB session wiring (`db.py`), the synthetic-company seed generator (`seed/`), and CSV/feed importers (`ingest/`).
 - `app/nlq/` — the natural-language query layer: an intent router first (L1), then Gemini tool-calling (L2).
 - `app/config.py` — all environment-based configuration (DB URL, Gemini API key, FX rate, simulation defaults, assumption bounds). Nothing here is a secret checked into source.
-- `dashboard/` — the Streamlit app: `Home.py` plus `pages/` for Executive, Technical, What-if, Investment, and Compliance views.
+- `dashboard/` — the Streamlit app: `Home.py` is the `st.navigation` shell (page config, shared stylesheet, sidebar brand, the sectioned nav itself — Overview / Risk / Decisions); `views/` holds each page's actual content (Home, Executive, Technical, What-if, Investment, Compliance), rendered by `nav.run()`.
 - `tests/` — pytest suite, including `test_engine_guardrails.py`, the R3 guardrail tests from `docs/build-spec.md`, written before the engine they guard.
 - `docs/` — the project's design documents (spec, research, problem statement) and this plan's source material.
 - `scripts/` — one-off maintenance or verification scripts (e.g. re-checking a regulatory fact before a demo).

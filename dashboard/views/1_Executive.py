@@ -21,15 +21,10 @@ from dashboard.theme import (
     CATEGORICAL,
     INK_SECONDARY,
     apply_layout,
-    inject_page_css,
     page_header,
     section_header,
-    sidebar_brand,
 )
 
-st.set_page_config(page_title="Executive | StochastiQ", layout="wide", page_icon="\U0001f6e1️")
-st.markdown(inject_page_css(), unsafe_allow_html=True)
-sidebar_brand()
 page_header(
     "Executive Risk View",
     "Expected Annual Loss, Value-at-Risk, the loss exceedance curve, and where risk concentrates.",

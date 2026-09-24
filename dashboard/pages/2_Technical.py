@@ -11,6 +11,7 @@ import streamlit as st
 
 from app.data import models as m
 from app.data.db import session_scope
+from app.optimize.recommendations import top_finding_recommendations
 
 st.set_page_config(page_title="Technical | StochastiQ", layout="wide")
 st.title("Technical View")
@@ -67,3 +68,27 @@ else:
         "No findings yet -- the real vulnerability intelligence and CSV importer "
         "land in PLAN.md Tasks 8-9. This table will populate once findings exist."
     )
+
+st.subheader("Top Remediation Actions")
+st.caption(
+    "Ranked by severity weight x asset criticality, with CISA KEV-listed CVEs weighted "
+    "higher ('KEV-first patching', build-spec.md section 3.3). Real KEV/EPSS data isn't "
+    "loaded yet (PLAN.md Task 8 needs network access this environment currently blocks), "
+    "so this is a proxy ranking, not a simulated ΔEAL -- labeled as such rather than "
+    "presented as more precise than it is."
+)
+recommendations = top_finding_recommendations(limit=10)
+if recommendations:
+    st.dataframe(
+        [
+            {
+                "Recommendation": r.recommendation_text,
+                "Risk score": round(r.risk_score, 2),
+            }
+            for r in recommendations
+        ],
+        hide_index=True,
+        width="stretch",
+    )
+else:
+    st.info("No open findings to recommend against.")

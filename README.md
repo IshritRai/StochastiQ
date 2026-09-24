@@ -39,11 +39,17 @@ Or via Docker: `docker compose up` (Postgres + API + dashboard).
 
 ## Current status
 
-This repository is at the start of `PLAN.md`'s build order: the repo scaffold,
-full database schema, a hand-written synthetic seed dataset, and the R3
-guardrail tests (written against an engine stub, so they currently `xfail`
-with `NotImplementedError` — that is expected and intentional until the
-engine itself is implemented). See `PLAN.md` for the full task-by-task order,
-the cut line, and the proposed assumption values (multiplier bounds, tail
-cap, control efficacy priors) still awaiting real telemetry or verified
-public sources.
+`PLAN.md` Tasks 0–5 are done: repo scaffold, full database schema, a
+hand-written synthetic seed dataset (with controls linked to the scenarios
+they affect), the real Monte Carlo engine (`simulate`/`summarize`/
+`run_scenario`/`run_org`/`attribute`/`apply_controls`), and a 5-page
+Streamlit dashboard (Executive, Technical, What-if, Investment, Compliance)
+reading live from the database. `make seed && make test` passes; `make
+run-dashboard` shows real EAL/VaR/loss-exceedance figures for the synthetic
+demo company. The Investment and Compliance pages are intentionally
+placeholders until their backing engine work (Tasks 6 and 11) lands — they
+show no fabricated numbers in the meantime.
+
+See `PLAN.md` for the full task-by-task order, the cut line, and the
+proposed assumption values (multiplier bounds, tail cap, control efficacy
+priors) still awaiting real telemetry or verified public sources.

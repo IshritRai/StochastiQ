@@ -14,7 +14,13 @@ from app.data.models import Base
 _connect_args = {"check_same_thread": False} if settings.database_url.startswith("sqlite") else {}
 
 engine = create_engine(settings.database_url, connect_args=_connect_args, future=True)
-SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False, future=True)
+# expire_on_commit=False: callers (esp. dashboard pages) routinely read ORM
+# objects returned from a `with session_scope():` block after it has closed
+# and committed. Without this, every attribute access after commit would
+# need to re-open a session (DetachedInstanceError otherwise).
+SessionLocal = sessionmaker(
+    bind=engine, autoflush=False, autocommit=False, future=True, expire_on_commit=False
+)
 
 
 def init_db() -> None:

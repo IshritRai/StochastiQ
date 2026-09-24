@@ -1,0 +1,43 @@
+databases:
+  - name: stochastiq-db
+    databaseName: stochastiq
+    user: stochastiq
+    plan: free
+
+services:
+  # Runs the one-shot demo bootstrap (seed, then real CISA KEV/FIRST EPSS
+  # data, falling back to the frozen fixture offline, then best-effort
+  # CVSS/OSV enrichment -- see scripts/demo_bootstrap.py) before starting
+  # the API, so the database is always seeded on first boot. Folded into
+  # the start command rather than a separate pre-deploy step so this works
+  # on the free plan too.
+  - type: web
+    name: stochastiq-api
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    plan: free
+    healthCheckPath: /health
+    dockerCommand: sh -c "python scripts/demo_bootstrap.py && uvicorn app.api.main:app --host 0.0.0.0 --port $PORT"
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: stochastiq-db
+          property: connectionString
+      - key: GEMINI_API_KEY
+        sync: false
+
+  - type: web
+    name: stochastiq-dashboard
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    plan: free
+    dockerCommand: streamlit run dashboard/Home.py --server.address 0.0.0.0 --server.port $PORT --server.headless true
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: stochastiq-db
+          property: connectionString
+      - key: GEMINI_API_KEY
+        sync: false

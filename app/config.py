@@ -7,6 +7,7 @@ microservices, and cloud-ready is satisfied by environment-based config.
 
 from __future__ import annotations
 
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -14,6 +15,20 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
     database_url: str = "sqlite:///./stochastiq.db"
+
+    @field_validator("database_url")
+    @classmethod
+    def _use_psycopg_driver(cls, v: str) -> str:
+        """Managed Postgres providers (Render, Railway, etc.) hand out a
+        plain postgres:// or postgresql:// URL. SQLAlchemy defaults that
+        scheme to psycopg2, which isn't a dependency here; rewrite it to
+        the psycopg (v3) driver this project actually installs, so a
+        provider's connection string works unmodified."""
+        if v.startswith("postgres://"):
+            return "postgresql+psycopg://" + v[len("postgres://") :]
+        if v.startswith("postgresql://"):
+            return "postgresql+psycopg://" + v[len("postgresql://") :]
+        return v
 
     # LLM: Gemini API, called from the backend only. Key comes from the
     # environment; never hard-code it or log it.

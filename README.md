@@ -44,6 +44,36 @@ the live feeds first and fall back to the frozen snapshot in
 `api`/`dashboard` wait for `init` to finish before starting, so there is no
 "dashboard is up but the database is empty" race.
 
+## Deploying
+
+`render.yaml` is a Render Blueprint that provisions all three pieces from
+this repo in one step:
+
+1. Push this repo to GitHub (already done if you're reading this from
+   there).
+2. In the Render dashboard: **New > Blueprint**, point it at this repo.
+   Render reads `render.yaml` and provisions:
+   - `stochastiq-db`: a managed Postgres database (free plan).
+   - `stochastiq-api`: the FastAPI service (currently a `/health` endpoint;
+     the dashboard talks to the database directly, not through the API,
+     per the "no microservices" design above).
+   - `stochastiq-dashboard`: the Streamlit app, the actual product UI.
+3. When prompted, set `GEMINI_API_KEY` on both services (optional: the NL
+   query box falls back to a plain keyword router without it).
+4. Deploy. The API service seeds the database on first boot
+   (`scripts/demo_bootstrap.py`, the same one `docker compose up` runs) and
+   the dashboard becomes available at its Render URL.
+
+**Free-plan caveats**, since none of this is disguised: Render's free
+Postgres is deleted after 30 days unless upgraded; free web services spin
+down after 15 minutes of inactivity and cold-start on the next request; and
+because the API service reseeds the database on every boot, an idle-driven
+restart resets the demo data (and any accumulated EAL trend history) back
+to the same deterministic seed rather than preserving it. All of this is
+appropriate for a demo deployment of a synthetic-data platform; upgrade the
+database plan and drop the reseed-on-boot step for anything meant to
+persist.
+
 ## What it does
 
 - **Risk quantification**: a Monte Carlo engine (`simulate`/`summarize`/

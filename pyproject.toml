@@ -1,0 +1,44 @@
+[project]
+name = "stochastiq"
+version = "0.1.0"
+description = "AI-powered continuous cyber risk quantification and investment optimization platform (SIH PS 26105)"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.32",
+    "sqlalchemy>=2.0",
+    "pydantic>=2.9",
+    "pydantic-settings>=2.5",
+    "numpy>=1.26",
+    "pandas>=2.2",
+    "scipy>=1.13",
+    "pulp>=2.8",
+    "streamlit>=1.38",
+    "plotly>=5.24",
+    "requests>=2.32",
+    "python-dotenv>=1.0",
+    "google-genai>=1.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.3",
+    "pytest-cov>=5.0",
+    "ruff>=0.6",
+]
+
+[tool.setuptools.packages.find]
+include = ["app*", "dashboard*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint.per-file-ignores]
+# Streamlit's multipage convention requires exact filenames (Home.py,
+# 1_Executive.py, ...) for sidebar ordering and page titles; not negotiable.
+"dashboard/Home.py" = ["N999"]
+"dashboard/pages/*.py" = ["N999"]

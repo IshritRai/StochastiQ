@@ -7,16 +7,25 @@ from __future__ import annotations
 import datetime as dt
 
 import pandas as pd
+import plotly.graph_objects as go
 import streamlit as st
 
+from app.config import settings
 from app.data import models as m
 from app.data.db import session_scope
+from app.engine.contracts import run_org
 from app.optimize.recommendations import top_finding_recommendations
-from dashboard.theme import STATUS, inject_page_css
+from dashboard.format_utils import format_inr
+from dashboard.theme import CATEGORICAL, INK_SECONDARY, STATUS, apply_layout, inject_page_css
 
 st.set_page_config(page_title="Technical | StochastiQ", layout="wide", page_icon="\U0001f6e1️")
 st.markdown(inject_page_css(), unsafe_allow_html=True)
 st.title("Technical View")
+
+
+@st.cache_data(ttl=300, show_spinner="Running the risk engine...")
+def _load_org_run(seed: int, n_iter: int):
+    return run_org(overrides={"n_iter": n_iter}, seed=seed)
 
 with session_scope() as session:
     assets = session.query(m.Asset).all()
@@ -99,3 +108,83 @@ if recommendations:
     st.markdown(rec_df.to_html(escape=False, index=False), unsafe_allow_html=True)
 else:
     st.info("No open findings to recommend against.")
+
+st.subheader("Scenario Sensitivity & Stability (PLAN.md Task 15)")
+st.caption(
+    "Telemetry-driven ExposureMult: the Vuln factor is scaled by the current open-finding "
+    "population (KEV-listed and high-EPSS CVEs weigh more), clipped to "
+    f"[{settings.exposure_mult_lo}x, {settings.exposure_mult_hi}x] so no single finding can push "
+    "EAL past that bound (build-spec.md risk R1's guardrail -- see "
+    "tests/test_exposure_guardrail.py). The tornado chart perturbs each factor by "
+    f"±{int(settings.tornado_perturbation_pct * 100)}% one at a time (same random draws each "
+    "time, per build-spec.md's common-random-numbers rule) to show which factor's uncertainty "
+    "moves EAL the most."
+)
+
+with session_scope() as session:
+    scenario_names = {s.id: s.name for s in session.query(m.ThreatScenario).filter_by(active=True).all()}
+
+org = _load_org_run(settings.default_seed, settings.default_n_iter)
+
+if org.scenario_results:
+    scenario_options = {scenario_names.get(sid, sid): sid for sid in org.scenario_results}
+    chosen_name = st.selectbox("Scenario", sorted(scenario_options.keys()))
+    chosen = org.scenario_results[scenario_options[chosen_name]]
+
+    badge_col, exposure_col = st.columns(2)
+    with badge_col:
+        flags = []
+        if chosen.stability and chosen.stability.get("fragile"):
+            flags.append("🔶 **Fragile** — one factor's swing alone moves EAL more than "
+                          f"{int(settings.fragile_swing_threshold * 100)}%")
+        if chosen.stability and chosen.stability.get("unstable"):
+            flags.append("🔷 **Unstable** — Monte Carlo std error exceeds "
+                          f"{int(settings.unstable_stderr_threshold * 100)}% of EAL; consider more iterations")
+        if not flags:
+            st.success("Stable: neither Fragile nor Unstable at current thresholds.")
+        for flag in flags:
+            st.warning(flag)
+    with exposure_col:
+        st.metric(
+            "ExposureMult (clipped)",
+            f"{chosen.exposure_mult:.2f}x",
+            help="1.0x = neutral (no open findings, or findings averaging the neutral baseline).",
+        )
+        if chosen.exposure_mult_clipped:
+            st.caption("⚠️ Raw telemetry-derived value was clipped to the configured bound.")
+        if chosen.exposure_breakdown:
+            eb = chosen.exposure_breakdown
+            st.caption(
+                f"{eb['n_open_findings']} open findings ({eb['n_kev_findings']} KEV-listed), "
+                f"run {chosen.run_id[:8]}"
+            )
+
+    if chosen.stability and chosen.stability.get("tornado"):
+        tornado_df = pd.DataFrame(chosen.stability["tornado"])
+        tornado_fig = go.Figure()
+        for _, row in tornado_df.iterrows():
+            tornado_fig.add_trace(
+                go.Bar(
+                    x=[row["eal_at_high"] - row["eal_at_low"]],
+                    y=[row["factor"]],
+                    base=[row["eal_at_low"]],
+                    orientation="h",
+                    marker_color=CATEGORICAL["blue"],
+                    showlegend=False,
+                    hovertemplate=(
+                        f"{row['factor']}<br>Low: {format_inr(row['eal_at_low'])}"
+                        f"<br>High: {format_inr(row['eal_at_high'])}<extra></extra>"
+                    ),
+                )
+            )
+        tornado_fig.update_layout(
+            xaxis_title="EAL (INR) across ±"
+            f"{int(settings.tornado_perturbation_pct * 100)}% perturbation",
+            yaxis_title=None,
+            font_color=INK_SECONDARY,
+        )
+        apply_layout(tornado_fig, height=260)
+        st.plotly_chart(tornado_fig, width="stretch")
+        st.caption(f"EAL at baseline: {format_inr(chosen.summary.eal)} (run {chosen.run_id[:8]}).")
+else:
+    st.info("No active scenarios found.")

@@ -21,6 +21,7 @@ import numpy as np
 from app.config import settings
 from app.data import models as m
 from app.data.db import session_scope
+from app.engine.exposure import compute_exposure_mult
 from app.engine.monte_carlo import simulate, summarize
 
 ENGINE_VERSION = "0.1.0"
@@ -110,12 +111,22 @@ def _apply_multipliers(
     return adjusted
 
 
+def clip_exposure_mult(exposure_mult: float) -> float:
+    return float(np.clip(exposure_mult, settings.exposure_mult_lo, settings.exposure_mult_hi))
+
+
 def _apply_exposure_mult(ranges: dict, exposure_mult: float) -> dict:
-    """Step 2 of the Risk Contract. L1: identity (1.0) unless the caller
-    supplies a value; L2 (PLAN.md Task 15) computes this from open findings."""
+    """Step 2 of the Risk Contract. Task 15: exposure_mult is telemetry-driven
+    (app.engine.exposure.compute_exposure_mult), computed from currently-open
+    findings unless the caller overrides it explicitly (e.g. What-if/NLQ
+    what-if-delay). Either way it is clipped here to
+    [exposure_mult_lo, exposure_mult_hi] -- THE ONE PLACE this bound is
+    enforced (build-spec.md risk R1: one extreme finding must never swing
+    EAL past a plausible range). Callers needing the clipped value for
+    provenance should call `clip_exposure_mult` themselves before this."""
     if exposure_mult == 1.0 or "Vuln" not in ranges:
         return ranges
-    exposure_mult = float(np.clip(exposure_mult, settings.exposure_mult_lo, settings.exposure_mult_hi))
+    exposure_mult = clip_exposure_mult(exposure_mult)
     adjusted = dict(ranges)
     low, mode, high = adjusted["Vuln"]
     adjusted["Vuln"] = (
@@ -172,6 +183,75 @@ def _default_tail_cap(session, scenario: m.ThreatScenario) -> float | None:
     return max_revenue_per_hour * 8760.0
 
 
+def _sensitivity_tornado(inputs: dict, seed: int, n_iter: int, pct: float | None = None) -> list[dict]:
+    """Tornado/sensitivity chart data (PLAN.md Task 15): perturbs each Risk
+    Contract factor by +-pct (default settings.tornado_perturbation_pct)
+    one at a time, using the SAME seed for every perturbation (common
+    random numbers, per build-spec.md risk R3), and records the resulting
+    EAL swing. Sorted widest-swing-first, as a tornado chart expects."""
+    pct = pct if pct is not None else settings.tornado_perturbation_pct
+
+    factor_groups: dict[str, list[str]] = {}
+    for key in inputs:
+        if key == "tail_cap":
+            continue
+        if isinstance(inputs[key], dict):
+            factor_groups[key] = [key]
+        else:
+            prefix = key.rsplit("_", 1)[0]
+            factor_groups.setdefault(prefix, []).append(key)
+
+    results = []
+    for factor, keys in factor_groups.items():
+        low_inputs = dict(inputs)
+        high_inputs = dict(inputs)
+        for key in keys:
+            value = inputs[key]
+            if isinstance(value, dict):
+                low_inputs[key] = {k: v * (1 - pct) for k, v in value.items()}
+                high_inputs[key] = {k: v * (1 + pct) for k, v in value.items()}
+            else:
+                low_inputs[key] = value * (1 - pct)
+                high_inputs[key] = value * (1 + pct)
+
+        low_eal = summarize(simulate(low_inputs, seed=seed, n_iter=n_iter)).eal
+        high_eal = summarize(simulate(high_inputs, seed=seed, n_iter=n_iter)).eal
+        results.append(
+            {
+                "factor": factor,
+                "eal_at_low": min(low_eal, high_eal),
+                "eal_at_high": max(low_eal, high_eal),
+                "swing": abs(high_eal - low_eal),
+            }
+        )
+
+    results.sort(key=lambda r: r["swing"], reverse=True)
+    return results
+
+
+def _stability_flags(summary, tornado: list[dict]) -> dict:
+    """Fragile/Unstable flags (PLAN.md Task 15, build-spec.md risk R1).
+
+    Fragile: the single most sensitive factor's tornado swing exceeds
+    `fragile_swing_threshold` of EAL -- i.e. this scenario's EAL hinges
+    heavily on one factor's exact value.
+    Unstable: the Monte Carlo standard error is more than
+    `unstable_stderr_threshold` of EAL -- more iterations are needed before
+    this EAL should be trusted to the precision it's displayed at.
+    """
+    eal = summary.eal
+    max_swing = tornado[0]["swing"] if tornado else 0.0
+    max_swing_pct = (max_swing / eal) if eal > 0 else 0.0
+    stderr_pct = (summary.std_err / eal) if eal > 0 else 0.0
+    return {
+        "fragile": max_swing_pct > settings.fragile_swing_threshold,
+        "unstable": stderr_pct > settings.unstable_stderr_threshold,
+        "max_tornado_swing_pct": max_swing_pct,
+        "std_err_pct": stderr_pct,
+        "most_sensitive_factor": tornado[0]["factor"] if tornado else None,
+    }
+
+
 def run_scenario_impl(scenario_id: str, overrides: dict, seed: int, persist: bool = True):
     """Runs one scenario. `seed` is the caller-facing seed (e.g. the org-level
     seed, or the seed a user typed into the What-if page); the actual draws
@@ -189,13 +269,22 @@ def run_scenario_impl(scenario_id: str, overrides: dict, seed: int, persist: boo
     overrides = overrides or {}
     n_iter = overrides.get("n_iter", settings.default_n_iter)
     control_state_overrides = overrides.get("control_state_overrides")
-    exposure_mult = overrides.get("exposure_mult", 1.0)
     effective_seed = _derive_seed(seed, scenario_id)
 
     with session_scope() as session:
         scenario = session.get(m.ThreatScenario, scenario_id)
         if scenario is None:
             raise ValueError(f"Unknown scenario_id: {scenario_id!r}")
+
+        if "exposure_mult" in overrides:
+            exposure_mult = overrides["exposure_mult"]
+            exposure_breakdown = None
+        else:
+            # Task 15: telemetry-driven, computed from currently-open
+            # findings rather than defaulting to the L1 identity 1.0. The
+            # hard R1 bound is enforced in _apply_exposure_mult below.
+            exposure_breakdown = compute_exposure_mult(session)
+            exposure_mult = exposure_breakdown.exposure_mult_raw
 
         ranges = _load_scenario_input_ranges(session, scenario_id)
         multipliers = _scenario_control_multipliers(session, scenario_id, control_state_overrides)
@@ -211,6 +300,13 @@ def run_scenario_impl(scenario_id: str, overrides: dict, seed: int, persist: boo
         summary = summarize(loss_vector)
         inputs_hash = _hash_inputs(inputs, effective_seed, n_iter)
         run_id = str(uuid.uuid4())
+
+        clipped_exposure_mult = clip_exposure_mult(exposure_mult) if "Vuln" in ranges else 1.0
+        exposure_mult_was_clipped = clipped_exposure_mult != exposure_mult
+
+        tornado = _sensitivity_tornado(inputs, effective_seed, n_iter)
+        stability = _stability_flags(summary, tornado)
+        stability["tornado"] = tornado
 
         if persist:
             session.add(
@@ -239,6 +335,10 @@ def run_scenario_impl(scenario_id: str, overrides: dict, seed: int, persist: boo
         engine_version=ENGINE_VERSION,
         summary=summary,
         loss_vector=loss_vector,
+        exposure_mult=clipped_exposure_mult,
+        exposure_mult_clipped=exposure_mult_was_clipped,
+        exposure_breakdown=exposure_breakdown.__dict__ if exposure_breakdown is not None else None,
+        stability=stability,
     )
 
 

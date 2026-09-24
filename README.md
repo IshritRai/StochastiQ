@@ -68,9 +68,21 @@ checked against the structured tool-call result before being shown
 key, or any Gemini failure falls straight back to the code-generated
 sentence, so the 9 intents behave the same with or without a key.
 
-Still open: the rest of the L2 sweep (Tasks 15, 17, 18: telemetry-driven
-exposure, RBI/SEBI catalogues, incident clocks, compliance ₹ link) and demo
-hardening (Task 21) are next.
+Task 15 is also done: ExposureMult is now telemetry-driven
+(`app/engine/exposure.py`) instead of the L1 identity 1.0 — it is computed
+from currently-open findings (KEV membership and EPSS both weigh a finding
+more heavily), and clipped to `[exposure_mult_lo, exposure_mult_hi]` so no
+single extreme finding can swing EAL past that configured bound
+(build-spec.md risk R1; the guardrail test,
+`tests/test_exposure_guardrail.py`, was written and run to fail before this
+was implemented, per CLAUDE.md). The Technical page now shows, per
+scenario: the clipped ExposureMult (flagged when the raw telemetry value
+was clipped), a tornado/sensitivity chart perturbing each Risk Contract
+factor by ±20% with common random numbers, and Fragile/Unstable stability
+flags.
+
+Still open: the rest of the L2 sweep (Tasks 17, 18: RBI/SEBI catalogues,
+incident clocks, compliance ₹ link) and demo hardening (Task 21) are next.
 
 See `PLAN.md` for the full task-by-task order, the cut line, and the
 proposed assumption values (multiplier bounds, tail cap, control efficacy

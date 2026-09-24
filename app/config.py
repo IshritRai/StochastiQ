@@ -39,5 +39,12 @@ class Settings(BaseSettings):
     # Vuln reduction (PLAN.md section 7, guards risk R1).
     combined_control_reduction_floor: float = 0.15
 
+    # PLAN.md Task 15: tornado/sensitivity perturbation size (+/- this
+    # fraction of each factor), and the thresholds for the Fragile/Unstable
+    # flags (is_assumption=true, revisit with real telemetry history).
+    tornado_perturbation_pct: float = 0.20
+    fragile_swing_threshold: float = 0.50  # a single factor's +/-20% swing moves EAL by >50%
+    unstable_stderr_threshold: float = 0.05  # MC std_err is >5% of EAL: needs more iterations
+
 
 settings = Settings()

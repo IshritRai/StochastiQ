@@ -34,6 +34,10 @@ class RunResult:
     engine_version: str
     summary: SummaryResult
     loss_vector: np.ndarray
+    exposure_mult: float = 1.0
+    exposure_mult_clipped: bool = False
+    exposure_breakdown: dict | None = None
+    stability: dict | None = None  # Fragile/Unstable flags, PLAN.md Task 15
 
 
 @dataclass

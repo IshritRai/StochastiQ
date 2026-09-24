@@ -5,6 +5,7 @@ WORKDIR /app
 COPY pyproject.toml ./
 COPY app ./app
 COPY dashboard ./dashboard
+COPY scripts ./scripts
 
 RUN pip install --no-cache-dir -e .
 

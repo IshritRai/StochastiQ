@@ -9,6 +9,26 @@ services:
       - "5432:5432"
     volumes:
       - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U stochastiq -d stochastiq"]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+
+  # One-shot demo bootstrap (PLAN.md Task 21: demo hardening). Rebuilds the
+  # exact same demo dataset every `docker compose up` -- real CISA KEV/FIRST
+  # EPSS data if the container has internet, the frozen fixture in
+  # app/data/fixtures/ if it doesn't (see scripts/demo_bootstrap.py) -- so
+  # api/dashboard never race an empty database and the demo needs no
+  # internet access at all.
+  init:
+    build: .
+    command: python scripts/demo_bootstrap.py
+    environment:
+      DATABASE_URL: postgresql+psycopg://stochastiq:stochastiq@db:5432/stochastiq
+    depends_on:
+      db:
+        condition: service_healthy
 
   api:
     build: .
@@ -19,7 +39,8 @@ services:
     ports:
       - "8000:8000"
     depends_on:
-      - db
+      init:
+        condition: service_completed_successfully
 
   dashboard:
     build: .
@@ -29,7 +50,8 @@ services:
     ports:
       - "8501:8501"
     depends_on:
-      - db
+      init:
+        condition: service_completed_successfully
 
 volumes:
   db_data:

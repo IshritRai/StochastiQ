@@ -9,6 +9,8 @@ being up is itself a flakiness risk).
 
 from __future__ import annotations
 
+import requests
+
 from app.data import models as m
 from app.data.ingest import vuln_intel
 from app.optimize.recommendations import top_finding_recommendations
@@ -64,8 +66,8 @@ def test_import_vuln_intel_creates_real_kev_backed_rows(engine_db, monkeypatch):
     _seed_minimal_org(session)
     session.close()
 
-    monkeypatch.setattr(vuln_intel, "fetch_kev", lambda timeout=30.0: _FAKE_KEV_CATALOG)
-    monkeypatch.setattr(vuln_intel, "fetch_epss", lambda cve_ids, timeout=20.0: _FAKE_EPSS_SCORES)
+    monkeypatch.setattr(vuln_intel, "fetch_kev", lambda timeout=30.0: (_FAKE_KEV_CATALOG, "live"))
+    monkeypatch.setattr(vuln_intel, "fetch_epss", lambda cve_ids, timeout=20.0: (_FAKE_EPSS_SCORES, "live"))
 
     result = vuln_intel.import_vuln_intel(n_cves=2, seed=42)
 
@@ -89,8 +91,8 @@ def test_removing_kev_flag_changes_finding_ranking(engine_db, monkeypatch):
     _seed_minimal_org(session)
     session.close()
 
-    monkeypatch.setattr(vuln_intel, "fetch_kev", lambda timeout=30.0: _FAKE_KEV_CATALOG)
-    monkeypatch.setattr(vuln_intel, "fetch_epss", lambda cve_ids, timeout=20.0: _FAKE_EPSS_SCORES)
+    monkeypatch.setattr(vuln_intel, "fetch_kev", lambda timeout=30.0: (_FAKE_KEV_CATALOG, "live"))
+    monkeypatch.setattr(vuln_intel, "fetch_epss", lambda cve_ids, timeout=20.0: (_FAKE_EPSS_SCORES, "live"))
     vuln_intel.import_vuln_intel(n_cves=2, seed=42)
 
     recs_before = top_finding_recommendations(limit=10)
@@ -107,3 +109,41 @@ def test_removing_kev_flag_changes_finding_ranking(engine_db, monkeypatch):
     log4j_after = next(r for r in recs_after if r.rule_or_cve.startswith("CVE-2021-44228"))
     assert "KEV" not in log4j_after.rule_or_cve
     assert log4j_after.risk_score < log4j_before.risk_score
+
+
+def test_fetch_kev_falls_back_to_offline_fixture_when_live_feed_unreachable(monkeypatch):
+    """PLAN.md Task 21 done-when: `docker compose up` reproduces the exact
+    demo state with no internet -- the live CISA KEV call must degrade to
+    the frozen fixture rather than raise."""
+
+    def _raise(*args, **kwargs):
+        raise requests.ConnectionError("simulated: no internet")
+
+    monkeypatch.setattr(requests, "get", _raise)
+
+    catalog, source = vuln_intel.fetch_kev()
+    assert source == "offline_fixture"
+    assert catalog["vulnerabilities"]
+
+    scores, epss_source = vuln_intel.fetch_epss([catalog["vulnerabilities"][0]["cveID"]])
+    assert epss_source == "offline_fixture"
+    assert isinstance(scores, dict)
+
+
+def test_import_vuln_intel_succeeds_with_no_network(engine_db, monkeypatch):
+    """End-to-end: the whole import (not just the fetch helpers) must
+    complete offline, since this is what `docker compose up` with no
+    internet actually calls."""
+    session = engine_db()
+    _seed_minimal_org(session)
+    session.close()
+
+    def _raise(*args, **kwargs):
+        raise requests.ConnectionError("simulated: no internet")
+
+    monkeypatch.setattr(requests, "get", _raise)
+
+    result = vuln_intel.import_vuln_intel(n_cves=5, seed=42)
+    assert result["kev_source"] == "offline_fixture"
+    assert result["epss_source"] == "offline_fixture"
+    assert result["n_created_vulns"] > 0

@@ -36,7 +36,14 @@ make run-api           # FastAPI on :8000
 make run-dashboard      # Streamlit on :8501
 ```
 
-Or via Docker: `docker compose up` (Postgres + API + dashboard).
+Or via Docker: `docker compose up` (Postgres + a one-shot `init` bootstrap +
+API + dashboard). `init` runs `scripts/demo_bootstrap.py` — seed, then
+KEV/EPSS ingestion, then best-effort CVSS/OSV enrichment — and builds the
+identical demo dataset **with or without internet access**: KEV/EPSS try
+the live feeds first and fall back to the frozen snapshot in
+`app/data/fixtures/` on any network failure (see that folder's README).
+`api`/`dashboard` wait for `init` to finish before starting, so there is no
+"dashboard is up but the DB is empty" race.
 
 ## Current status
 
@@ -104,8 +111,25 @@ queries).
 
 All of PLAN.md's L2 tasks 14, 15, 17, 18 are now done; Task 16 (Gemini
 tool-calling) is also done (a `GEMINI_API_KEY` is configured in this
-environment). Only the stretch tasks (19–20) and demo hardening (Task 21)
-remain.
+environment).
+
+Task 21 (demo hardening) is now done for its code-facing parts: `make
+fetch-vuln-intel` / `import_vuln_intel()` fall back to a frozen, real KEV +
+EPSS snapshot (`app/data/fixtures/`) whenever the live feeds are
+unreachable, instead of raising (`tests/test_vuln_intel.py`'s two new
+offline tests cover this, including the full `import_vuln_intel` path with
+`requests.get` monkeypatched to fail outright); Gemini already had this
+fallback from Task 16. `scripts/demo_bootstrap.py` plus the `init` service
+in `docker-compose.yml` mean `docker compose up` alone reproduces the exact
+demo dataset with no internet — no manual `make seed` / `make
+fetch-vuln-intel` steps, and the same result whether the container has
+internet or not. Every `IngestRun` from this path records which source
+(`live` vs. `offline_fixture`) it actually used, so the provenance trail
+stays honest either way (CLAUDE.md rule 2). What's left of Task 21 is
+non-code: an actual pre-demo rehearsal and a recorded backup video, plus
+verifying the regulatory facts flagged unverified in `PLAN.md` §8 against
+primary sources before going on stage. Only the stretch tasks (19–20)
+remain otherwise.
 
 See `PLAN.md` for the full task-by-task order, the cut line, and the
 proposed assumption values (multiplier bounds, tail cap, control efficacy

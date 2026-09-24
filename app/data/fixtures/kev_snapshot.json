@@ -1,0 +1,245 @@
+{
+  "catalogVersion": "2026.09.23",
+  "count": 1721,
+  "vulnerabilities": [
+    {
+      "cveID": "CVE-2026-34197",
+      "vendorProject": "Apache",
+      "product": "ActiveMQ",
+      "vulnerabilityName": "Apache ActiveMQ Improper Input Validation Vulnerability",
+      "dateAdded": "2026-04-16",
+      "shortDescription": "Apache ActiveMQ contains an improper input validation vulnerability that allows for code injection.",
+      "requiredAction": "Apply mitigations per vendor instructions, follow applicable BOD 22-01 guidance for cloud services, or discontinue use of the product if mitigations are unavailable.",
+      "dueDate": "2026-04-30",
+      "knownRansomwareCampaignUse": "Unknown",
+      "forensicTriage": "No",
+      "notes": "https://activemq.apache.org/security-advisories.data/CVE-2026-34197-announcement.txt ; https://nvd.nist.gov/vuln/detail/CVE-2026-34197",
+      "cwes": [
+        "CWE-20",
+        "CWE-94"
+      ]
+    },
+    {
+      "cveID": "CVE-2026-34621",
+      "vendorProject": "Adobe",
+      "product": "Acrobat and Reader",
+      "vulnerabilityName": "Adobe Acrobat and Reader Prototype Pollution Vulnerability",
+      "dateAdded": "2026-04-13",
+      "shortDescription": "Adobe Acrobat and Reader contain a prototype pollution vulnerability that allows for arbitrary code execution.",
+      "requiredAction": "Apply mitigations per vendor instructions, follow applicable BOD 22-01 guidance for cloud services, or discontinue use of the product if mitigations are unavailable.",
+      "dueDate": "2026-04-27",
+      "knownRansomwareCampaignUse": "Unknown",
+      "forensicTriage": "No",
+      "notes": "https://helpx.adobe.com/security/products/acrobat/apsb26-43.html ; https://nvd.nist.gov/vuln/detail/CVE-2026-34621",
+      "cwes": [
+        "CWE-1321"
+      ]
+    },
+    {
+      "cveID": "CVE-2018-10561",
+      "vendorProject": "Dasan",
+      "product": "Gigabit Passive Optical Network (GPON) Routers",
+      "vulnerabilityName": "Dasan GPON Routers Authentication Bypass Vulnerability",
+      "dateAdded": "2022-03-31",
+      "shortDescription": "Dasan GPON Routers contain an authentication bypass vulnerability. When combined with CVE-2018-10562, exploitation can allow an attacker to perform remote code execution.",
+      "requiredAction": "The impacted product is end-of-life and should be disconnected if still in use.",
+      "dueDate": "2022-04-21",
+      "knownRansomwareCampaignUse": "Unknown",
+      "forensicTriage": "No",
+      "notes": "https://nvd.nist.gov/vuln/detail/CVE-2018-10561",
+      "cwes": [
+        "CWE-287"
+      ]
+    },
+    {
+      "cveID": "CVE-2015-1701",
+      "vendorProject": "Microsoft",
+      "product": "Win32k",
+      "vulnerabilityName": "Microsoft Win32k Privilege Escalation Vulnerability",
+      "dateAdded": "2022-03-03",
+      "shortDescription": "An unspecified vulnerability exists in the Win32k.sys kernel-mode driver in Microsoft Windows Server that allows a local attacker to execute arbitrary code with elevated privileges.",
+      "requiredAction": "Apply updates per vendor instructions.",
+      "dueDate": "2022-03-24",
+      "knownRansomwareCampaignUse": "Known",
+      "forensicTriage": "No",
+      "notes": "https://nvd.nist.gov/vuln/detail/CVE-2015-1701",
+      "cwes": [
+        "CWE-264"
+      ]
+    },
+    {
+      "cveID": "CVE-2016-10033",
+      "vendorProject": "PHP",
+      "product": "PHPMailer",
+      "vulnerabilityName": "PHPMailer Command Injection Vulnerability",
+      "dateAdded": "2025-07-07",
+      "shortDescription": "PHPMailer contains a command injection vulnerability because it fails to sanitize user-supplied input. Specifically, this issue affects the 'mail()' function of 'class.phpmailer.php' script. An attacker can exploit this issue to execute arbitrary code within the context of the application. Failed exploit attempts will result in a denial-of-service condition.",
+      "requiredAction": "Apply mitigations per vendor instructions, follow applicable BOD 22-01 guidance for cloud services, or discontinue use of the product if mitigations are unavailable.",
+      "dueDate": "2025-07-28",
+      "knownRansomwareCampaignUse": "Unknown",
+      "forensicTriage": "No",
+      "notes": "This vulnerability could affect an open-source component, third-party library, protocol, or proprietary implementation that could be used by different products. For more information, please see: https://github.com/PHPMailer/PHPMailer/releases/tag/v5.2.18 ; https://github.com/advisories/GHSA-5f37-gxvh-23v6 ; https://nvd.nist.gov/vuln/detail/CVE-2016-10033",
+      "cwes": [
+        "CWE-77",
+        "CWE-88"
+      ]
+    },
+    {
+      "cveID": "CVE-2021-21973",
+      "vendorProject": "VMware",
+      "product": "vCenter Server and Cloud Foundation",
+      "vulnerabilityName": "VMware vCenter Server and Cloud Foundation Server Side Request Forgery (SSRF) Vulnerability",
+      "dateAdded": "2022-03-07",
+      "shortDescription": "VMware vCenter Server and Cloud Foundation Server contain a SSRF vulnerability due to improper validation of URLs in a vCenter Server plugin. This allows for information disclosure.",
+      "requiredAction": "Apply updates per vendor instructions.",
+      "dueDate": "2022-03-21",
+      "knownRansomwareCampaignUse": "Unknown",
+      "forensicTriage": "No",
+      "notes": "https://nvd.nist.gov/vuln/detail/CVE-2021-21973",
+      "cwes": [
+        "CWE-20",
+        "CWE-918"
+      ]
+    },
+    {
+      "cveID": "CVE-2023-27351",
+      "vendorProject": "PaperCut",
+      "product": "NG/MF",
+      "vulnerabilityName": "PaperCut NG/MF Improper Authentication Vulnerability",
+      "dateAdded": "2026-04-20",
+      "shortDescription": "PaperCut NG/MF contains an improper authentication vulnerability that could allow remote attackers to bypass authentication on affected installations via the SecurityRequestFilter class.",
+      "requiredAction": "Apply mitigations per vendor instructions, follow applicable BOD 22-01 guidance for cloud services, or discontinue use of the product if mitigations are unavailable.",
+      "dueDate": "2026-05-04",
+      "knownRansomwareCampaignUse": "Known",
+      "forensicTriage": "No",
+      "notes": "https://www.papercut.com/kb/Main/PO-1216-and-PO-1219 ; https://nvd.nist.gov/vuln/detail/CVE-2023-27351",
+      "cwes": [
+        "CWE-287"
+      ]
+    },
+    {
+      "cveID": "CVE-2018-0159",
+      "vendorProject": "Cisco",
+      "product": "IOS Software and Cisco IOS XE Software",
+      "vulnerabilityName": "Cisco IOS and XE Software Internet Key Exchange Version 1 Denial-of-Service Vulnerability",
+      "dateAdded": "2022-03-03",
+      "shortDescription": "A vulnerability in the implementation of Internet Key Exchange Version 1 (IKEv1) functionality in Cisco IOS Software and Cisco IOS XE Software could allow an unauthenticated, remote attacker to cause an affected device to reload, resulting in a denial-of-service (DoS) condition.",
+      "requiredAction": "Apply updates per vendor instructions.",
+      "dueDate": "2022-03-17",
+      "knownRansomwareCampaignUse": "Unknown",
+      "forensicTriage": "No",
+      "notes": "https://nvd.nist.gov/vuln/detail/CVE-2018-0159",
+      "cwes": [
+        "CWE-20"
+      ]
+    },
+    {
+      "cveID": "CVE-2022-29303",
+      "vendorProject": "SolarView",
+      "product": "Compact",
+      "vulnerabilityName": "SolarView Compact Command Injection Vulnerability",
+      "dateAdded": "2023-07-13",
+      "shortDescription": "SolarView Compact contains a command injection vulnerability due to improper validation of input values on the send test mail console of the product's web server.",
+      "requiredAction": "Apply updates per vendor instructions or discontinue use of the product if updates are unavailable.",
+      "dueDate": "2023-08-03",
+      "knownRansomwareCampaignUse": "Unknown",
+      "forensicTriage": "No",
+      "notes": "https://jvn.jp/en/vu/JVNVU92327282/;  https://nvd.nist.gov/vuln/detail/CVE-2022-29303",
+      "cwes": [
+        "CWE-78"
+      ]
+    },
+    {
+      "cveID": "CVE-2021-1879",
+      "vendorProject": "Apple",
+      "product": "iOS, iPadOS, and watchOS",
+      "vulnerabilityName": "Apple iOS, iPadOS, and watchOS WebKit Cross-Site Scripting (XSS) Vulnerability",
+      "dateAdded": "2021-11-03",
+      "shortDescription": "Apple iOS, iPadOS, and watchOS WebKit contain an unspecified vulnerability that allows for universal cross-site scripting (XSS) when processing maliciously crafted web content. This vulnerability could impact HTML parsers that use WebKit, including but not limited to Apple Safari and non-Apple products which rely on WebKit for HTML processing.",
+      "requiredAction": "Apply updates per vendor instructions.",
+      "dueDate": "2021-11-17",
+      "knownRansomwareCampaignUse": "Unknown",
+      "forensicTriage": "No",
+      "notes": "https://nvd.nist.gov/vuln/detail/CVE-2021-1879",
+      "cwes": [
+        "CWE-79"
+      ]
+    },
+    {
+      "cveID": "CVE-2023-38180",
+      "vendorProject": "Microsoft",
+      "product": ".NET Core and Visual Studio",
+      "vulnerabilityName": "Microsoft .NET Core and Visual Studio Denial-of-Service Vulnerability",
+      "dateAdded": "2023-08-09",
+      "shortDescription": "Microsoft .NET Core and Visual Studio contain an unspecified vulnerability that allows for denial-of-service (DoS).",
+      "requiredAction": "Apply mitigations per vendor instructions or discontinue use of the product if mitigations are unavailable.",
+      "dueDate": "2023-08-30",
+      "knownRansomwareCampaignUse": "Unknown",
+      "forensicTriage": "No",
+      "notes": "https://msrc.microsoft.com/update-guide/en-US/vulnerability/CVE-2023-38180;  https://nvd.nist.gov/vuln/detail/CVE-2023-38180",
+      "cwes": []
+    },
+    {
+      "cveID": "CVE-2018-7445",
+      "vendorProject": "MikroTik",
+      "product": "RouterOS",
+      "vulnerabilityName": "MikroTik RouterOS Stack-Based Buffer Overflow Vulnerability",
+      "dateAdded": "2022-09-08",
+      "shortDescription": "In MikroTik RouterOS, a stack-based buffer overflow occurs when processing NetBIOS session request messages. Remote attackers with access to the service can exploit this vulnerability and gain code execution on the system.",
+      "requiredAction": "Apply updates per vendor instructions.",
+      "dueDate": "2022-09-29",
+      "knownRansomwareCampaignUse": "Unknown",
+      "forensicTriage": "No",
+      "notes": "https://www.coresecurity.com/core-labs/advisories/mikrotik-routeros-smb-buffer-overflow#vendor_update, https://mikrotik.com/download; https://nvd.nist.gov/vuln/detail/CVE-2018-7445",
+      "cwes": [
+        "CWE-119"
+      ]
+    },
+    {
+      "cveID": "CVE-2012-4681",
+      "vendorProject": "Oracle",
+      "product": "Java SE",
+      "vulnerabilityName": "Oracle Java SE Runtime Environment (JRE) Arbitrary Code Execution Vulnerability",
+      "dateAdded": "2022-03-03",
+      "shortDescription": "The Java Runtime Environment (JRE) component in Oracle Java SE allow for remote code execution.",
+      "requiredAction": "Apply updates per vendor instructions.",
+      "dueDate": "2022-03-24",
+      "knownRansomwareCampaignUse": "Known",
+      "forensicTriage": "No",
+      "notes": "https://nvd.nist.gov/vuln/detail/CVE-2012-4681",
+      "cwes": []
+    },
+    {
+      "cveID": "CVE-2015-4068",
+      "vendorProject": "Arcserve",
+      "product": "Unified Data Protection (UDP)",
+      "vulnerabilityName": "Arcserve Unified Data Protection (UDP) Directory Traversal Vulnerability",
+      "dateAdded": "2022-03-25",
+      "shortDescription": "Directory traversal vulnerability in Arcserve UDP allows remote attackers to obtain sensitive information or cause a denial of service.",
+      "requiredAction": "Apply updates per vendor instructions.",
+      "dueDate": "2022-04-15",
+      "knownRansomwareCampaignUse": "Unknown",
+      "forensicTriage": "No",
+      "notes": "https://nvd.nist.gov/vuln/detail/CVE-2015-4068",
+      "cwes": [
+        "CWE-22"
+      ]
+    },
+    {
+      "cveID": "CVE-2016-3643",
+      "vendorProject": "SolarWinds",
+      "product": "Virtualization Manager",
+      "vulnerabilityName": "SolarWinds Virtualization Manager Privilege Escalation Vulnerability",
+      "dateAdded": "2021-11-03",
+      "shortDescription": "SolarWinds Virtualization Manager allows for privilege escalation through leveraging a misconfiguration of sudo.",
+      "requiredAction": "Apply updates per vendor instructions.",
+      "dueDate": "2022-05-03",
+      "knownRansomwareCampaignUse": "Unknown",
+      "forensicTriage": "No",
+      "notes": "https://nvd.nist.gov/vuln/detail/CVE-2016-3643",
+      "cwes": [
+        "CWE-264"
+      ]
+    }
+  ]
+}

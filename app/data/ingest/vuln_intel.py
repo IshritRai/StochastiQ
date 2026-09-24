@@ -16,6 +16,8 @@ every number: source, timestamp, run ID").
 from __future__ import annotations
 
 import datetime as dt
+import json
+from pathlib import Path
 
 import numpy as np
 import requests
@@ -27,25 +29,40 @@ from app.data.db import session_scope
 KEV_URL = "https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json"
 EPSS_URL = "https://api.first.org/data/v1/epss"
 
-
-def fetch_kev(timeout: float = 30.0) -> dict:
-    """Downloads the live CISA KEV catalog. Raises on network failure --
-    callers decide the offline fallback (build-spec.md section 6, demo
-    hardening: 'offline fallback if KEV/EPSS unreachable')."""
-    response = requests.get(KEV_URL, timeout=timeout)
-    response.raise_for_status()
-    return response.json()
+FIXTURES_DIR = Path(__file__).resolve().parent.parent / "fixtures"
+KEV_FIXTURE_PATH = FIXTURES_DIR / "kev_snapshot.json"
+EPSS_FIXTURE_PATH = FIXTURES_DIR / "epss_snapshot.json"
 
 
-def fetch_epss(cve_ids: list[str], timeout: float = 20.0) -> dict[str, dict]:
+def fetch_kev(timeout: float = 30.0) -> tuple[dict, str]:
+    """Downloads the live CISA KEV catalog. Falls back to the frozen
+    fixture (PLAN.md Task 21: demo hardening -- 'offline fallback if
+    KEV/EPSS/Gemini unreachable') on any network failure so `docker compose
+    up` reproduces the demo with no internet. Returns (catalog, source)
+    where source is "live" or "offline_fixture"."""
+    try:
+        response = requests.get(KEV_URL, timeout=timeout)
+        response.raise_for_status()
+        return response.json(), "live"
+    except requests.RequestException:
+        return json.loads(KEV_FIXTURE_PATH.read_text()), "offline_fixture"
+
+
+def fetch_epss(cve_ids: list[str], timeout: float = 20.0) -> tuple[dict[str, dict], str]:
     """Batched EPSS lookup (the API accepts a comma-separated CVE list, up to
-    its own page limit). Returns {cve_id: {"epss": float, "percentile": float,
-    "date": str}}; missing CVEs (not yet scored) are simply absent."""
+    its own page limit). Returns ({cve_id: {"epss", "percentile", "date"}},
+    source) where source is "live" or "offline_fixture"; missing CVEs (not
+    yet scored, or absent from the frozen fixture) are simply absent."""
     if not cve_ids:
-        return {}
-    response = requests.get(EPSS_URL, params={"cve": ",".join(cve_ids)}, timeout=timeout)
-    response.raise_for_status()
-    payload = response.json()
+        return {}, "live"
+    try:
+        response = requests.get(EPSS_URL, params={"cve": ",".join(cve_ids)}, timeout=timeout)
+        response.raise_for_status()
+        payload = response.json()
+        source = "live"
+    except requests.RequestException:
+        payload = json.loads(EPSS_FIXTURE_PATH.read_text())
+        source = "offline_fixture"
     return {
         row["cve"]: {
             "epss": float(row["epss"]),
@@ -53,7 +70,37 @@ def fetch_epss(cve_ids: list[str], timeout: float = 20.0) -> dict[str, dict]:
             "date": row["date"],
         }
         for row in payload.get("data", [])
-    }
+    }, source
+
+
+def refresh_offline_fixture(n_cves: int = 15, seed: int | None = None) -> None:
+    """Re-captures the frozen fixture from the live feeds, using the exact
+    sample `import_vuln_intel` would draw for the given seed. Run this with
+    internet access whenever the fixture should be refreshed; never called
+    automatically (a frozen fixture that silently refreshes on whoever
+    happens to have internet would defeat the point of freezing it)."""
+    seed = seed if seed is not None else settings.default_seed
+    rng = np.random.default_rng(seed)
+
+    response = requests.get(KEV_URL, timeout=30.0)
+    response.raise_for_status()
+    catalog = response.json()
+    all_vulns = catalog.get("vulnerabilities", [])
+    sample_size = min(n_cves, len(all_vulns))
+    sampled_indices = rng.choice(len(all_vulns), size=sample_size, replace=False)
+    sampled = [all_vulns[i] for i in sampled_indices]
+
+    KEV_FIXTURE_PATH.write_text(
+        json.dumps(
+            {"catalogVersion": catalog.get("catalogVersion"), "count": catalog.get("count"), "vulnerabilities": sampled},
+            indent=2,
+        )
+    )
+
+    cve_ids = [entry["cveID"] for entry in sampled]
+    response = requests.get(EPSS_URL, params={"cve": ",".join(cve_ids)}, timeout=20.0)
+    response.raise_for_status()
+    EPSS_FIXTURE_PATH.write_text(json.dumps(response.json(), indent=2))
 
 
 def import_vuln_intel(n_cves: int = 15, seed: int | None = None) -> dict:
@@ -66,23 +113,28 @@ def import_vuln_intel(n_cves: int = 15, seed: int | None = None) -> dict:
     seed = seed if seed is not None else settings.default_seed
     rng = np.random.default_rng(seed)
 
-    kev_catalog = fetch_kev()
+    kev_catalog, kev_source = fetch_kev()
     all_vulns = kev_catalog.get("vulnerabilities", [])
     if not all_vulns:
-        raise ValueError("CISA KEV feed returned no vulnerabilities")
+        raise ValueError("CISA KEV feed and offline fixture both returned no vulnerabilities")
 
     sample_size = min(n_cves, len(all_vulns))
     sampled_indices = rng.choice(len(all_vulns), size=sample_size, replace=False)
     sampled = [all_vulns[i] for i in sampled_indices]
 
     cve_ids = [entry["cveID"] for entry in sampled]
-    epss_scores = fetch_epss(cve_ids)
+    epss_scores, epss_source = fetch_epss(cve_ids)
 
     with session_scope() as session:
         source = m.DataSource(
             name="CISA KEV + FIRST EPSS",
             kind="api",
-            licence_note="CISA KEV: public domain / CC0. FIRST EPSS: public, no auth.",
+            licence_note=(
+                "CISA KEV: public domain / CC0. FIRST EPSS: public, no auth. "
+                f"kev_source={kev_source}, epss_source={epss_source} "
+                "(offline_fixture = frozen snapshot used because the live feed "
+                "was unreachable; see app/data/fixtures/README.md)."
+            ),
         )
         session.add(source)
         session.flush()
@@ -184,6 +236,8 @@ def import_vuln_intel(n_cves: int = 15, seed: int | None = None) -> dict:
             "ingest_run_id": run.id,
             "catalog_version": kev_catalog.get("catalogVersion"),
             "kev_total_count": kev_catalog.get("count"),
+            "kev_source": kev_source,
+            "epss_source": epss_source,
             "n_sampled": len(sampled),
             "n_created_vulns": n_created_vulns,
             "n_created_findings": n_created_findings,

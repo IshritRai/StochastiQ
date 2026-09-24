@@ -126,6 +126,28 @@ written before `llm_router.py` existed). Any Gemini failure (no/invalid
 to the code-generated sentence from the same handler, so the 9 intents work
 identically with or without a key.
 
+**Task 21 status: code-facing parts done, rehearsal/video/fact-check still
+open.** `app/data/fixtures/kev_snapshot.json` and `epss_snapshot.json` are a
+frozen, real capture of the exact 15-CVE sample `import_vuln_intel` draws
+with the default seed. `app/data/ingest/vuln_intel.py`'s `fetch_kev`/
+`fetch_epss` now try the live CISA KEV / FIRST EPSS feeds first and fall
+back to that fixture on any `requests.RequestException`, recording
+`kev_source`/`epss_source` (`live` or `offline_fixture`) on the resulting
+`IngestRun` so provenance stays honest either way (CLAUDE.md rule 2).
+`scripts/demo_bootstrap.py` runs `seed()` → `import_vuln_intel()` →
+best-effort `enrich_cvss_scores()`/`enrich_package_matches()` (the latter
+two already degraded per-row on network failure from Task 14); it's wired
+into `docker-compose.yml` as a one-shot `init` service that `api`/
+`dashboard` wait on via `service_completed_successfully`, so `docker
+compose up` alone reproduces the identical demo dataset with or without
+internet — no manual `make` steps, no empty-DB race. Gemini's offline
+fallback already existed from Task 16. `tests/test_vuln_intel.py` gained
+two tests asserting the fallback (`fetch_kev`/`fetch_epss` directly, and
+the whole `import_vuln_intel` path with `requests.get` monkeypatched to
+raise). Not done: an actual rehearsal, a recorded backup video, and
+verifying the PLAN.md §8 regulatory/count facts against primary sources —
+none of these are code changes.
+
 ---
 
 ## 5. Every component present at L1 first, then L2 in demo-value order

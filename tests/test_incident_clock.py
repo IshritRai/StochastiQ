@@ -28,14 +28,13 @@ def test_catalogue_import_creates_frameworks_and_obligations(engine_db):
 
     # FrameworkControl rows: RBI's paragraphs were confirmed against the
     # primary RBI/DoS/2026-27/461 PDF (read in full in this session), and
-    # SEBI's against its primary CSCRF circular plus its own CSCRF FAQ PDF
-    # (Annexure-O forensic-report requirement, Q76). Only SEBI-CSCRF-VAPT
-    # remains unverified: the FAQ's "3 months" VAPT-closure figure is for a
-    # different (periodic cyber-audit) VAPT cycle, not confirmed as this
-    # same incident-response item (see rbi_sebi_data.py's module docstring).
+    # SEBI's against its primary CSCRF circular, its CSCRF FAQ PDF
+    # (Annexure-O forensic-report requirement, Q76), and Annexure-O's own
+    # Table 36 (VAPT-and-closure-report row, 45 days) -- every catalogue
+    # row is now verified against a primary source.
     controls = {c.control_id: c for c in session.query(m.FrameworkControl).all()}
     assert controls
-    unverified_controls = {"SEBI-CSCRF-VAPT"}
+    unverified_controls: set[str] = set()
     for control_id, control in controls.items():
         expected = control_id not in unverified_controls
         assert control.verified is expected, control_id

@@ -123,15 +123,14 @@ st.subheader("Indian Regulatory Catalogues (PLAN.md Task 17)")
 st.caption(
     "RBI's 2026 NBFC Cybersecurity Directions (RBI/DoS/2026-27/461) and SEBI's CSCRF, "
     "hand-built from paragraph/standard IDs (never the regulator's full clause text, "
-    "per CLAUDE.md's ISO/CIS licensing rule extended here). All rows below are now "
+    "per CLAUDE.md's ISO/CIS licensing rule extended here). Every row below is now "
     "`verified=True` against a primary source -- the RBI Directions PDF read in full, "
-    "SEBI's primary CSCRF circular, and SEBI's own CSCRF FAQ PDF -- except one SEBI row "
-    "(incident-related VAPT closure) shown with a red ⚠️ badge because the closest "
-    "primary confirmation found describes a different VAPT cycle, not silently promoted "
-    "(see app/compliance/rbi_sebi_data.py's module docstring). The incident-clock "
-    "deadlines below were confirmed the same way, including DPDP's 72-hour clock "
-    "against the actual Gazette notification text (G.S.R. 846(E)) -- every regime is "
-    "now marked verified."
+    "SEBI's primary CSCRF circular, SEBI's own CSCRF FAQ PDF, and Annexure-O's own "
+    "Table 36 for the incident-response VAPT-closure timeline (see "
+    "app/compliance/rbi_sebi_data.py's module docstring for exactly what was read). "
+    "The incident-clock deadlines below were confirmed the same way, including DPDP's "
+    "72-hour clock against the actual Gazette notification text (G.S.R. 846(E)) -- "
+    "every regime and every control is now marked verified."
 )
 with session_scope() as session:
     reg_frameworks = [

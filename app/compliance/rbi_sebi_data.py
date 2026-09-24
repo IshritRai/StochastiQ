@@ -51,14 +51,17 @@ a follow-up primary-source pass on 2026-09-24:
   report is mandatory for High/Critical incidents, and conditional
   (RCA-inconclusive or SEBI/HPSC-CS-directed) for Low/Medium. Now
   `verified=True`.
-- SEBI-CSCRF-VAPT remains `verified=False`: the same primary FAQ (Q15, Q17)
-  confirms a "three (3) months" VAPT-finding-closure timeline, but that is
-  the periodic cyber-audit VAPT closure timeline (CSCRF section 4.3), not
-  confirmed as the same thing as the incident-response "VAPT and closure
-  report" this row describes (secondary-sourced from veritect.ai as a
-  distinct 45-day track under Annexure-O). Conflating the two would be a
-  guess, not a verification, so this row stays unverified pending a read
-  of Annexure-O's actual VAPT-closure clause.
+- SEBI-CSCRF-VAPT: Annexure-O's own Table 36 (fetched and read in full from
+  an NCDEX-hosted mirror of the primary circular PDF, since sebi.gov.in's
+  copy 503'd) was checked directly rather than relying on the FAQ's
+  distinct "three (3) months" cyber-audit-VAPT figure. Table 36 row 5 reads
+  verbatim: "Vulnerability Assessment and Penetration Testing (VAPT) for
+  the incident and its closure reports -- 45 days" (from the date of
+  reporting the incident) -- confirming the secondary source's 45-day
+  figure exactly, as its own row distinct from row 4's forensic-audit/
+  closure track (up to 75 days per clause 4.3). SEBI-CSCRF-VAPT is now
+  `verified=True`; every catalogue row is verified against a primary
+  source.
 """
 
 from __future__ import annotations
@@ -137,12 +140,9 @@ SEBI_CONTROLS: list[tuple[str, str, str, bool]] = [
     ),
     (
         "SEBI-CSCRF-VAPT",
-        "Incident-related VAPT and closure report",
-        "https://veritect.ai/digital-data-ai-law/sebi-cscrf-compliance-playbook",
-        False,  # secondary source's "45-day track" not confirmed; SEBI's own
-        # FAQ (Q15, Q17) confirms a "3 months" VAPT-closure timeline, but for
-        # the periodic cyber-audit VAPT cycle, not verified as this same
-        # incident-response item -- stays unverified rather than conflating.
+        "Incident-related VAPT and its closure report, 45 days (Annexure-O Table 36, row 5)",
+        "https://ncdex.com/public/uploads/circulars/Cybersecurity%20and%20Cyber%20Resilience%20Framework%20(CSCRF)%20for%20SEBI%20Regulated%20Entities%20(REs)_1724679211.pdf",
+        True,  # confirmed verbatim from Annexure-O's Table 36, read in full
     ),
 ]
 
